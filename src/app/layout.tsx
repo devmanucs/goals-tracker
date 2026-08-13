@@ -2,6 +2,7 @@ import { Geist, Geist_Mono, Merriweather } from "next/font/google"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
+import { DsTooltipProvider } from "@/components/ds/tooltip"
 import { cn } from "@/lib/utils";
 
 const merriweather = Merriweather({subsets:['latin'],variable:'--font-serif'});
@@ -28,7 +29,9 @@ export default function RootLayout({
       className={cn("antialiased", fontSans.variable, fontMono.variable, "font-serif", merriweather.variable)}
     >
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <DsTooltipProvider>{children}</DsTooltipProvider>
+        </ThemeProvider>
       </body>
     </html>
   )
