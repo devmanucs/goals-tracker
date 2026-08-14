@@ -111,6 +111,17 @@ export function streakDoHabito(habitoId: string) {
   return streak
 }
 
+export function progressoDoDia(habito: Habito, registros: RegistroHabito[], data: string) {
+  const valor = registros.filter((r) => r.data === data).reduce((acc, r) => acc + r.valor, 0)
+  const referencia =
+    habito.frequencia === "diaria"
+      ? habito.metaValor
+      : habito.frequencia === "semanal"
+        ? habito.metaValor / 7
+        : habito.metaValor / 30
+  return { valor, percentual: referencia > 0 ? Math.min(1, valor / referencia) : 0 }
+}
+
 function calcularStreakAgrupado(habitoId: string) {
   const habito = getHabito(habitoId)
   if (!habito) return 0

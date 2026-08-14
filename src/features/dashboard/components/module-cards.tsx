@@ -1,15 +1,22 @@
-import type { ReactNode } from "react"
-import Link from "next/link"
-import { HugeiconsIcon } from "@hugeicons/react"
 import { ArrowRight02Icon, Fire03Icon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
+import Link from "next/link"
+import type { ReactNode } from "react"
 
 import { DsBadge } from "@/components/ds/badge"
 import { DsFrameFooter, DsFrameHeader, DsFramePanel, DsFrameTitle } from "@/components/ds/frame"
 import { DsProgress, DsProgressIndicator, DsProgressTrack } from "@/components/ds/progress"
-import { formatarDataCompleta } from "@/lib/dates"
-import { estatisticasLeitura, getRegistrosDoLivro, livroEmAndamento } from "@/features/leitura/data"
-import { diasAteProva, getConcurso, proximoTopico, STATUS_TOPICO_LABEL } from "@/features/estudos/data"
+import { PesoIndicator } from "@/features/estudos/components/peso-indicator"
+import { corDaMateria, diasAteProva, getConcurso, proximoTopico, STATUS_TOPICO_LABEL } from "@/features/estudos/data"
 import { getHabitos, progressoPeriodoAtual, streakDoHabito } from "@/features/habitos/data"
+import {
+  estatisticasLeitura,
+  getRegistrosDoLivro,
+  livroEmAndamento,
+  livrosLidosNoAno,
+  META_ANUAL_LEITURA,
+} from "@/features/leitura/data"
+import { formatarDataCompleta, HOJE } from "@/lib/dates"
 
 function CardShell({
   href,
@@ -83,7 +90,7 @@ export function LeituraSummaryCard() {
         </div>
       </div>
       <p className="mt-3 text-xs text-muted-foreground">
-        {stats.livrosLidos} livros lidos · ritmo médio de {stats.ritmoMedioDiario} pág./dia
+        {stats.livrosLidos} livros lidos · meta {HOJE.slice(0, 4)}: {livrosLidosNoAno()}/{META_ANUAL_LEITURA}
       </p>
     </CardShell>
   )
@@ -107,13 +114,16 @@ export function EstudosSummaryCard() {
     <CardShell href="/estudos" title="Estudos">
       <p className="text-xs text-muted-foreground">Próximo tópico</p>
       <p className="mt-0.5 text-sm font-medium">{topico.titulo}</p>
-      <div className="mt-2 flex flex-wrap items-center gap-1.5">
-        <DsBadge variant="outline" className="text-muted-foreground">
+      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <span
+            className="size-1.5 shrink-0 rounded-full"
+            style={{ backgroundColor: corDaMateria(topico.materia) }}
+            aria-hidden="true"
+          />
           {topico.materia}
-        </DsBadge>
-        <DsBadge variant="outline" className="text-muted-foreground">
-          peso {topico.peso}
-        </DsBadge>
+        </span>
+        <PesoIndicator peso={topico.peso} />
         <DsBadge variant="outline" className="text-muted-foreground">
           {STATUS_TOPICO_LABEL[topico.status]}
         </DsBadge>
@@ -137,22 +147,24 @@ export function HabitosSummaryCard() {
           const progresso = progressoPeriodoAtual(habito.id)
           const streak = streakDoHabito(habito.id)
           return (
-            <div key={habito.id}>
-              <div className="flex items-center justify-between gap-2">
-                <span className="truncate text-sm font-medium">{habito.nome}</span>
-                <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <HugeiconsIcon icon={Fire03Icon} strokeWidth={2} className="size-3.5" />
-                  {streak}
-                </span>
+            <div key={habito.id} className="flex items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="truncate text-sm font-medium">{habito.nome}</span>
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <HugeiconsIcon icon={Fire03Icon} strokeWidth={2} className="size-3.5" />
+                    {streak}
+                  </span>
+                </div>
+                <DsProgress value={progresso.percentual} className="mt-1.5">
+                  <span className="sr-only">
+                    {progresso.atual} de {progresso.meta} {habito.unidade}
+                  </span>
+                  <DsProgressTrack>
+                    <DsProgressIndicator />
+                  </DsProgressTrack>
+                </DsProgress>
               </div>
-              <DsProgress value={progresso.percentual} className="mt-1.5">
-                <span className="sr-only">
-                  {progresso.atual} de {progresso.meta} {habito.unidade}
-                </span>
-                <DsProgressTrack>
-                  <DsProgressIndicator />
-                </DsProgressTrack>
-              </DsProgress>
             </div>
           )
         })}

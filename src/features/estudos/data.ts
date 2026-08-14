@@ -27,6 +27,20 @@ export const STATUS_TOPICO_LABEL: Record<StatusTopico, string> = {
   revisao: "Revisão",
 }
 
+const CORES_MATERIA = [
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
+]
+
+export function corDaMateria(materia: string) {
+  let hash = 0
+  for (let i = 0; i < materia.length; i++) hash = (hash * 31 + materia.charCodeAt(i)) >>> 0
+  return CORES_MATERIA[hash % CORES_MATERIA.length]
+}
+
 export const concursos: Concurso[] = [
   {
     id: "c1",

@@ -1,4 +1,6 @@
-import { diasEntre } from "@/lib/dates"
+import { diasEntre, HOJE } from "@/lib/dates"
+
+export const META_ANUAL_LEITURA = 12
 
 export type StatusLivro = "quero_ler" | "lendo" | "lido" | "abandonado"
 
@@ -111,6 +113,14 @@ export function getRegistrosDoLivro(livroId: string) {
 export function paginaAtualDoLivro(livroId: string) {
   const registros = getRegistrosDoLivro(livroId)
   return registros.at(-1)?.paginaAtual ?? 0
+}
+
+export function livrosLidosNoAno(ano = HOJE.slice(0, 4)) {
+  return livros.filter((l) => {
+    if (l.status !== "lido") return false
+    const ultima = getRegistrosDoLivro(l.id).at(-1)?.data
+    return ultima ? ultima.slice(0, 4) === ano : true
+  }).length
 }
 
 export function livroEmAndamento() {

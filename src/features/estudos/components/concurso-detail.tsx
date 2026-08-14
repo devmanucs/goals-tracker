@@ -6,7 +6,6 @@ import { Calendar03Icon } from "@hugeicons/core-free-icons"
 
 import { AppHeader } from "@/components/app-header"
 import { DsFrame, DsFramePanel } from "@/components/ds/frame"
-import { DsProgress, DsProgressIndicator, DsProgressTrack } from "@/components/ds/progress"
 import { DsTabs, DsTabsContent, DsTabsList, DsTabsTrigger } from "@/components/ds/tabs"
 import { CalendarioTopicos } from "@/features/estudos/components/calendario-topicos"
 import { TopicoFormDialog } from "@/features/estudos/components/topico-form-dialog"
@@ -24,10 +23,12 @@ export function ConcursoDetail({
 }) {
   const [topicos, setTopicos] = useState<TopicoEstudo[]>(topicosIniciais)
 
-  const percentual = useMemo(() => {
-    if (topicos.length === 0) return 0
+  const contagem = useMemo(() => {
     const estudados = topicos.filter((t) => t.status === "estudado" || t.status === "revisao").length
-    return Math.round((estudados / topicos.length) * 100)
+    const estudando = topicos.filter((t) => t.status === "estudando").length
+    const pendentes = topicos.length - estudados - estudando
+    const percentual = topicos.length === 0 ? 0 : Math.round((estudados / topicos.length) * 100)
+    return { estudados, estudando, pendentes, percentual }
   }, [topicos])
 
   const dias = diasAteProva(concurso.id)
@@ -52,22 +53,38 @@ export function ConcursoDetail({
           </div>
           <TopicoFormDialog concursoId={concurso.id} onAdd={(t) => setTopicos((prev) => [t, ...prev])} />
         </div>
-        <DsFrame>
-          <DsFramePanel className="flex flex-col gap-2">
-            <div className="flex items-baseline justify-between">
-              <p className="text-sm font-medium">Progresso do edital</p>
-              <p className="text-sm text-muted-foreground">
-                {topicos.filter((t) => t.status === "estudado" || t.status === "revisao").length} de {topicos.length} tópicos
-              </p>
-            </div>
-            <DsProgress value={percentual}>
-              <span className="ml-auto text-sm font-medium tabular-nums">{percentual}%</span>
-              <DsProgressTrack>
-                <DsProgressIndicator />
-              </DsProgressTrack>
-            </DsProgress>
-          </DsFramePanel>
 
+        {topicos.length > 0 && (
+          <DsFramePanel>
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Progresso do edital</p>
+                <p className="mt-1 font-heading text-3xl font-medium tabular-nums">{contagem.percentual}%</p>
+              </div>
+              <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-sm">
+                <LegendaProgresso cor="bg-primary" label="Estudado" valor={contagem.estudados} />
+                <LegendaProgresso cor="bg-secondary" label="Estudando" valor={contagem.estudando} />
+                <LegendaProgresso cor="bg-muted" label="Pendente" valor={contagem.pendentes} />
+              </div>
+            </div>
+            <div className="mt-4 flex h-2.5 overflow-hidden rounded-full bg-muted">
+              {contagem.estudados > 0 && (
+                <div
+                  className="bg-primary transition-[width] duration-300"
+                  style={{ width: `${(contagem.estudados / topicos.length) * 100}%` }}
+                />
+              )}
+              {contagem.estudando > 0 && (
+                <div
+                  className="bg-secondary transition-[width] duration-300"
+                  style={{ width: `${(contagem.estudando / topicos.length) * 100}%` }}
+                />
+              )}
+            </div>
+          </DsFramePanel>
+        )}
+
+        <DsFrame>
           {topicos.length === 0 ? (
             <DsFramePanel className="py-12 text-center text-sm text-muted-foreground">
               Nenhum tópico cadastrado ainda. Adicione os tópicos do edital para começar a priorizar os estudos.
@@ -91,5 +108,15 @@ export function ConcursoDetail({
         </DsFrame>
       </div>
     </div>
+  )
+}
+
+function LegendaProgresso({ cor, label, valor }: { cor: string; label: string; valor: number }) {
+  return (
+    <span className="flex items-center gap-1.5">
+      <span className={`size-2 shrink-0 rounded-full ${cor}`} aria-hidden="true" />
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium tabular-nums">{valor}</span>
+    </span>
   )
 }

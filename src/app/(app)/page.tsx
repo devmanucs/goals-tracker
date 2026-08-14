@@ -1,3 +1,5 @@
+import { Book02Icon, BookOpen01Icon, Fire03Icon, GraduationCapIcon } from "@hugeicons/core-free-icons"
+
 import { AppHeader } from "@/components/app-header"
 import { StatStrip } from "@/components/stat-card"
 import { formatarDataCompleta } from "@/lib/dates"
@@ -31,15 +33,16 @@ export default function DashboardPage() {
 
         <StatStrip
           stats={[
-            { label: "Livros lidos", value: leitura.livrosLidos },
-            { label: "Páginas lidas", value: leitura.paginasLidasTotal },
-            { label: "Maior streak ativo", value: maiorStreak },
+            { label: "Livros lidos", value: leitura.livrosLidos, icon: Book02Icon },
+            { label: "Páginas lidas", value: leitura.paginasLidasTotal, icon: BookOpen01Icon },
+            { label: "Maior streak ativo", value: maiorStreak, icon: Fire03Icon },
             ...(proximoConcurso
               ? [
                   {
                     label: "Dias até a prova",
                     value: diasAteProva(proximoConcurso.id) ?? 0,
                     hint: proximoConcurso.titulo,
+                    icon: GraduationCapIcon,
                   },
                 ]
               : []),

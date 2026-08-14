@@ -2,14 +2,21 @@ import Link from "next/link"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Fire03Icon } from "@hugeicons/core-free-icons"
 
-import { DsFrameFooter, DsFrameHeader, DsFramePanel, DsFrameTitle } from "@/components/ds/frame"
+import { DsFrame, DsFrameFooter, DsFrameHeader, DsFramePanel, DsFrameTitle } from "@/components/ds/frame"
 import { DsProgress, DsProgressIndicator, DsProgressTrack } from "@/components/ds/progress"
+import { StreakHeatmap } from "@/features/habitos/components/streak-heatmap"
 import type { Habito } from "@/features/habitos/data"
-import { FREQUENCIA_LABEL, progressoPeriodoAtual, streakDoHabito } from "@/features/habitos/data"
+import {
+  FREQUENCIA_LABEL,
+  getRegistrosDoHabito,
+  progressoPeriodoAtual,
+  streakDoHabito,
+} from "@/features/habitos/data"
 
 export function HabitoCard({ habito }: { habito: Habito }) {
   const progresso = progressoPeriodoAtual(habito.id)
   const streak = streakDoHabito(habito.id)
+  const registros = getRegistrosDoHabito(habito.id)
 
   return (
     <Link href={`/habitos/${habito.id}`} className="group block h-full">
@@ -21,8 +28,11 @@ export function HabitoCard({ habito }: { habito: Habito }) {
             {streak}
           </span>
         </DsFrameHeader>
-        <div className="flex-1 px-5 pb-4 text-sm text-muted-foreground">
-          {habito.metaValor} {habito.unidade} {FREQUENCIA_LABEL[habito.frequencia]}
+        <div className="flex flex-1 flex-col gap-3 px-5 pb-4">
+          <p className="text-sm text-muted-foreground">
+            {habito.metaValor} {habito.unidade} {FREQUENCIA_LABEL[habito.frequencia]}
+          </p>
+          <StreakHeatmap habito={habito} registros={registros} semanas={1} />
         </div>
         <DsFrameFooter className="border-t">
           <DsProgress value={progresso.percentual}>
