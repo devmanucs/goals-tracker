@@ -21,5 +21,8 @@
   },
   "menuColor": "default-translucent",
   "menuAccent": "subtle",
-  "registries": {}
+  "registries": {
+    "@coss": "https://coss.com/ui/r/{name}.json",
+    "@skiper-ui": "https://skiper-ui.com/registry/{name}.json"
+  }
 }
