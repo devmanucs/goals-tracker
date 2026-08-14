@@ -7,6 +7,7 @@ import {
   SheetDescription,
   SheetFooter,
   SheetHeader,
+  SheetPanel,
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
@@ -29,6 +30,11 @@ export function DsSheetClose(props: DsSheetCloseProps) {
 export type DsSheetContentProps = React.ComponentProps<typeof SheetContent>
 export function DsSheetContent(props: DsSheetContentProps) {
   return <SheetContent {...props} />
+}
+
+export type DsSheetPanelProps = React.ComponentProps<typeof SheetPanel>
+export function DsSheetPanel(props: DsSheetPanelProps) {
+  return <SheetPanel {...props} />
 }
 
 export type DsSheetHeaderProps = React.ComponentProps<typeof SheetHeader>
