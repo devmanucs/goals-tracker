@@ -4,7 +4,7 @@ import Link from "next/link"
 import type { ReactNode } from "react"
 
 import { DsBadge } from "@/components/ds/badge"
-import { DsFrameFooter, DsFrameHeader, DsFramePanel, DsFrameTitle } from "@/components/ds/frame"
+import { DsFrame, DsFrameFooter, DsFrameHeader, DsFramePanel, DsFrameTitle } from "@/components/ds/frame"
 import { DsProgress, DsProgressIndicator, DsProgressTrack } from "@/components/ds/progress"
 import { PesoIndicator } from "@/features/estudos/components/peso-indicator"
 import { corDaMateria, diasAteProva, getConcurso, proximoTopico, STATUS_TOPICO_LABEL } from "@/features/estudos/data"
@@ -31,7 +31,7 @@ function CardShell({
 }) {
   return (
     <Link href={href} className="group block h-full">
-      <DsFramePanel className="flex h-full flex-col gap-0 p-0 transition-shadow duration-200 group-hover:shadow-md">
+      <DsFrame className="h-full transition-shadow duration-200 group-hover:shadow-md">
         <DsFrameHeader className="flex-row items-center justify-between gap-2 pb-2">
           <DsFrameTitle>{title}</DsFrameTitle>
           <HugeiconsIcon
@@ -40,9 +40,9 @@ function CardShell({
             className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground"
           />
         </DsFrameHeader>
-        <div className="flex-1 px-5 pb-4">{children}</div>
-        {footer && <DsFrameFooter className="border-t">{footer}</DsFrameFooter>}
-      </DsFramePanel>
+        <DsFramePanel className="flex-1">{children}</DsFramePanel>
+        {footer && <DsFrameFooter>{footer}</DsFrameFooter>}
+      </DsFrame>
     </Link>
   )
 }

@@ -20,7 +20,7 @@ export function HabitoCard({ habito }: { habito: Habito }) {
 
   return (
     <Link href={`/habitos/${habito.id}`} className="group block h-full">
-      <DsFramePanel className="flex h-full flex-col gap-0 p-0 transition-shadow duration-200 group-hover:shadow-md">
+      <DsFrame className="h-full transition-shadow duration-200 group-hover:shadow-md">
         <DsFrameHeader className="flex-row items-start justify-between gap-2">
           <DsFrameTitle>{habito.nome}</DsFrameTitle>
           <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
@@ -28,13 +28,13 @@ export function HabitoCard({ habito }: { habito: Habito }) {
             {streak}
           </span>
         </DsFrameHeader>
-        <div className="flex flex-1 flex-col gap-3 px-5 pb-4">
+        <DsFramePanel className="flex flex-1 flex-col gap-3">
           <p className="text-sm text-muted-foreground">
             {habito.metaValor} {habito.unidade} {FREQUENCIA_LABEL[habito.frequencia]}
           </p>
           <StreakHeatmap habito={habito} registros={registros} semanas={1} />
-        </div>
-        <DsFrameFooter className="border-t">
+        </DsFramePanel>
+        <DsFrameFooter>
           <DsProgress value={progresso.percentual}>
             <span className="text-xs text-muted-foreground">
               {progresso.atual} de {progresso.meta} {habito.unidade}
@@ -45,7 +45,7 @@ export function HabitoCard({ habito }: { habito: Habito }) {
             </DsProgressTrack>
           </DsProgress>
         </DsFrameFooter>
-      </DsFramePanel>
+      </DsFrame>
     </Link>
   )
 }
