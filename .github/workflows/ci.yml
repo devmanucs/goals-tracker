@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # Permite rodar na mão pela aba Actions.
+  workflow_dispatch:
+
+# Um push novo na mesma branch cancela a execução anterior.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificar:
+    name: Lint, typecheck, testes e build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # A versão vem do campo packageManager do package.json.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Testes
+        run: pnpm test
+
+      # O build é o passo que mais pega coisa: além de compilar, o Next resolve
+      # as rotas e roda o TypeScript de novo sobre o grafo inteiro.
+      - name: Build
+        run: pnpm build
+        env:
+          # Só precisa existir: nenhuma rota do app é pré-renderizada (todas
+          # dependem do cookie de sessão), então o build não chama a API.
+          API_URL: http://localhost:3333

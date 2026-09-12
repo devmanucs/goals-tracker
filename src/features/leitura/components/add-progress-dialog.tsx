@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState, useEffect, useState } from "react"
+import { useActionState, useState } from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { PlusSignIcon } from "@hugeicons/core-free-icons"
 
@@ -34,13 +34,13 @@ export function AddProgressDialog({
 }) {
   const [open, setOpen] = useState(false)
   const [estado, acao, salvando] = useActionState(
-    registrarProgresso.bind(null, livroId),
+    async (anterior: EstadoDaAcao, formData: FormData) => {
+      const resultado = await registrarProgresso(livroId, anterior, formData)
+      if (resultado.ok) setOpen(false)
+      return resultado
+    },
     ESTADO_INICIAL,
   )
-
-  useEffect(() => {
-    if (estado.ok) setOpen(false)
-  }, [estado])
 
   // Data de hoje do próprio navegador: aqui ela é só o valor inicial do campo,
   // quem calcula período de verdade é o backend.

@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState, useEffect, useState } from "react"
+import { useActionState, useState } from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { PlusSignIcon } from "@hugeicons/core-free-icons"
 
@@ -33,12 +33,15 @@ const ESTADO_INICIAL: EstadoDaAcao = {}
 export function BookFormDialog() {
   const [open, setOpen] = useState(false)
   const [status, setStatus] = useState<StatusLivro>("quero_ler")
-  const [estado, acao, salvando] = useActionState(criarLivro, ESTADO_INICIAL)
-
   // A action revalida a rota; aqui só fechamos a gaveta quando ela dá certo.
-  useEffect(() => {
-    if (estado.ok) setOpen(false)
-  }, [estado])
+  const [estado, acao, salvando] = useActionState(
+    async (anterior: EstadoDaAcao, formData: FormData) => {
+      const resultado = await criarLivro(anterior, formData)
+      if (resultado.ok) setOpen(false)
+      return resultado
+    },
+    ESTADO_INICIAL,
+  )
 
   return (
     <DsSheet open={open} onOpenChange={setOpen}>

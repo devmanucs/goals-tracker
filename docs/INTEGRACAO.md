@@ -1,8 +1,11 @@
 # INTEGRACAO.md — Ligando o frontend na API
 
-Estado atual: **o backend já implementa tudo que o frontend precisa para sair do mock**,
-menos `/auth/me`, `/auth/logout`, a busca externa de livros e a retrospectiva.
-Este documento é o contrato real, conferido contra o código do backend.
+Estado atual: **o frontend já consome a API — não há mais mock.** Este documento é
+o contrato real, conferido contra o código do backend e exercitado pelos roteiros
+em `e2e/`.
+
+O único item do [API_ROUTES.md](API_ROUTES.md) que segue sem implementação é a
+**busca externa de livros** (`/livros/buscar-externo`, proxy do Open Library).
 
 Backend: [devmanucs/goals-tracker-back](https://github.com/devmanucs/goals-tracker-back)
 (Express 5 + Prisma 7 + SQLite em dev).
@@ -42,10 +45,16 @@ usuário · `500` erro interno.
 |---|---|---|
 | POST | `/auth/register` | `{ id, nome, email }` — **não devolve token** |
 | POST | `/auth/login` | `{ token }` |
+| GET | `/auth/me` | `{ id, nome, email, createdAt }` |
+| POST | `/auth/logout` | 204 — revoga o token usado |
 
 > Atenção: a rota é `/auth/register`, não `/auth/registrar` como sugerido no
-> [API_ROUTES.md](API_ROUTES.md) original. E o registro **não** devolve token — depois
-> de registrar é preciso chamar o login. `/auth/me` e `/auth/logout` ainda não existem.
+> [API_ROUTES.md](API_ROUTES.md) original. E o registro **não** devolve token — a
+> action `registrar` já emenda o login por causa disso.
+
+`POST /auth/logout` **revoga de verdade**: o token entra numa lista de bloqueio e
+para de valer na hora, em vez de só sumir do cliente. Depois dele, qualquer
+requisição com aquele token dá 401. Só o dispositivo atual cai.
 
 ### Leitura
 | Método | Rota | Observação |
@@ -112,6 +121,22 @@ Alimenta `calendario-topicos.tsx` e `calendario-semana.tsx` direto.
 { habitoId, frequencia, atual, periodoAtualBatido, recorde }
 ```
 
+### Retrospectiva
+`GET /retrospectiva?meses=6` (1 a 60, padrão 6) — as três séries mensais e o
+resumo, no formato que o `retrospectiva-charts.tsx` espera:
+
+```ts
+{
+  meses: number
+  paginasLidasPorMes: { mes: string; paginas: number }[]
+  topicosEstudadosPorMes: { mes: string; topicos: number }[]
+  habitosConcluidosPorMes: { mes: string; percentual: number }[]
+  resumo: { livrosLidos, paginasLidas, topicosEstudados, maiorStreak }
+}
+```
+
+Meses sem dado vêm zerados, para o gráfico não ficar com buraco.
+
 ### Dashboard
 `GET /dashboard` — uma requisição para o `module-cards.tsx` inteiro:
 
@@ -129,11 +154,25 @@ Alimenta `calendario-topicos.tsx` e `calendario-semana.tsx` direto.
   }
   habitos: {
     total: number
-    streaksAtivos: { habitoId, nome, unidade, frequencia, icone, streak, recorde, progresso }[]
+    lista: Habito[]          // todos, ordenados por streak
+    comStreakAtivo: number
     metasBatidasNoPeriodo: number
   }
 }
 ```
+
+### Derivados que já vêm embutidos
+
+Para a listagem não virar N+1, a API devolve os derivados junto da entidade:
+
+| Entidade | Campos extras |
+|---|---|
+| `Livro` | `paginaAtual`, `percentual`, `ultimaLeitura` |
+| `Concurso` | `progresso { total, concluidos, percentual }`, `diasAteProva` |
+| `Habito` | `progresso`, `streak`, `registrosRecentes` (90 dias) |
+
+Os endpoints isolados (`/concursos/:id/progresso`, `/habitos/:id/streak`…)
+continuam existindo para quem quiser só o número.
 
 ## Diferenças entre o mock e o backend
 
@@ -175,34 +214,36 @@ que ele vai mudar.
 O mock sempre tem valor. No backend vêm `null` quando não informados — trate o
 fallback na UI (sugestão: derivar do hash do título, como `corDaMateria` já faz).
 
-## Plano de migração
+## Como a integração ficou montada
 
-Um módulo por vez, do menos para o mais acoplado: **Leitura → Estudos → Hábitos →
-Dashboard → Retrospectiva**.
+Feita um módulo por vez, do menos para o mais acoplado: **Leitura → Estudos →
+Hábitos → Dashboard → Retrospectiva**. O desenho final:
 
-**1. Cliente HTTP.** Criar `src/lib/api.ts` com um `fetch` que injeta a base URL e o
-header `Authorization`, e converte `ErroApi` em `Error` com a mensagem já em português.
+**Cliente HTTP** — `src/lib/api.ts`, `server-only`: injeta a base URL e o header
+`Authorization`, e converte o `{ error: { … } }` do backend num `ApiError` tipado.
 
-**2. Auth de verdade.** `login-form.tsx` chama `POST /auth/login`, guarda o token
-(cookie `httpOnly` via route handler é melhor que `localStorage`) e redireciona.
-Sem `/auth/me`, o nome do usuário na sidebar continua fixo por enquanto.
+**Sessão** — o JWT vive num cookie `httpOnly` (`gt_sessao`), então JavaScript no
+navegador não alcança o token e um XSS não consegue lê-lo. É por isso que toda
+chamada à API sai do servidor: nenhum componente de cliente fala com a API direto.
+`src/features/auth/data.ts` valida o token contra `/auth/me` e é o que de fato
+protege as rotas; `src/proxy.ts` (em Next 16 o middleware virou Proxy) só faz a
+checagem otimista de presença do cookie.
 
-**3. Por módulo:**
-   - Mantenha os **tipos** de `data.ts` — eles já batem com o backend.
-   - Troque os seletores (`getLivros`, `getLivro`, …) por chamadas na página (Server
-     Component), passando os dados por props.
-   - **Apague** as funções derivadas (`estatisticasLeitura`, `progressoConcurso`,
-     `streakDoHabito`, `progressoPeriodoAtual`, `proximoTopico`) — elas agora são
-     endpoint. Duplicar a regra nos dois lados é o que faz o número divergir.
-   - Após mutação, `revalidatePath` da rota afetada.
+**Por módulo** — cada um tem `types.ts` (tipos e constantes de apresentação),
+`api.ts` (leituras, `server-only`) e `actions.ts` (mutações, Server Actions). As
+páginas são Server Components que buscam e passam por props; depois de mutar, a
+action chama `revalidatePath`, então não existe cópia local do estado para sair de
+sincronia com o servidor.
 
-**4. `HOJE` sai.** Nenhuma tela deve mais importar a data fixa: quem calcula período
-é o backend. Onde o front ainda precisar de "hoje" (input de data com default), use
-a data do cliente — é só valor inicial de formulário.
+**Cálculo derivado saiu do front.** `estatisticasLeitura`, `progressoConcurso`,
+`streakDoHabito`, `progressoPeriodoAtual` e `proximoTopico` viraram endpoint —
+duplicar a regra nos dois lados é justamente o que faz o número divergir. No
+frontend sobrou só math de apresentação: a cor da capa, a cor da matéria e a
+intensidade de cada célula do heatmap.
 
-**5. Retrospectiva.** Ainda **não tem endpoint**. Ou se implementa
-`GET /retrospectiva?meses=6` no backend, ou a tela é montada por cima de
-`/leitura/estatisticas` e `/concursos/:id/progresso` com um período por mês.
+**A data fixa `HOJE` saiu das telas.** Onde ainda é preciso um "hoje" — valor
+inicial de campo de data, recorte visual do heatmap — usa-se a data do navegador.
+Período e streak são responsabilidade do backend.
 
 ## Variáveis de ambiente
 

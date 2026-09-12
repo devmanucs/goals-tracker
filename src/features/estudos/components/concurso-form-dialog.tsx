@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState, useEffect, useState } from "react"
+import { useActionState, useState } from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { PlusSignIcon } from "@hugeicons/core-free-icons"
 
@@ -33,11 +33,14 @@ const ESTADO_INICIAL: EstadoDaAcao = {}
 export function ConcursoFormDialog() {
   const [open, setOpen] = useState(false)
   const [status, setStatus] = useState<StatusConcurso>("planejando")
-  const [estado, acao, salvando] = useActionState(criarConcurso, ESTADO_INICIAL)
-
-  useEffect(() => {
-    if (estado.ok) setOpen(false)
-  }, [estado])
+  const [estado, acao, salvando] = useActionState(
+    async (anterior: EstadoDaAcao, formData: FormData) => {
+      const resultado = await criarConcurso(anterior, formData)
+      if (resultado.ok) setOpen(false)
+      return resultado
+    },
+    ESTADO_INICIAL,
+  )
 
   const hoje = new Date().toISOString().slice(0, 10)
 

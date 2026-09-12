@@ -15,32 +15,47 @@ Configuração em `jest.config.ts`, usando `next/jest` — ele cuida do SWC, dos
 ### O que é testado
 
 ```
-tests/
-  lib/dates.test.ts          # parse, diasEntre, compararDatas, formatação
-  features/leitura.test.ts   # seletores, página atual, estatísticas
-  features/estudos.test.ts   # ordenação por peso, progresso, próximo tópico
-  features/habitos.test.ts   # progresso do período, streak, progresso do dia
+tests/lib/dates.test.ts   # parse, diasEntre, compararDatas, formatação
 ```
 
-O foco é a **lógica pura** de `features/*/data.ts` e `lib/dates.ts` — é onde ficam as
-regras que também existem no backend, e onde um erro silencioso muda o número na tela
-sem quebrar nada.
+Os testes dos `features/*/data.ts` foram removidos junto com os mocks: eles
+exercitavam dados que não existem mais. As regras que eles cobriam (streak,
+progresso, páginas por delta) agora são do backend, onde têm 148 testes.
 
-Dois testes merecem atenção porque documentam armadilhas reais:
+O `dates.test.ts` fixa uma armadilha real: **`diasEntre` NÃO serve de comparador**
+de ordenação, porque devolve `b - a`. Usá-lo em `sort` ordena ao contrário, e foi
+a causa de `paginaAtualDoLivro` reportar a primeira página em vez da atual. Para
+ordenar por data, use `compararDatas`.
 
-- `dates.test.ts` fixa que **`diasEntre` NÃO serve de comparador** de ordenação
-  (ele devolve `b - a`). Usá-lo em `sort` ordena ao contrário, e foi a causa de
-  `paginaAtualDoLivro` reportar a primeira página em vez da atual. Use `compararDatas`.
-- `leitura.test.ts` fixa que `paginaAtualDoLivro` usa o registro **mais recente**.
+## Ponta a ponta (`e2e/`)
+
+Rodam o app de verdade no Chromium, contra a API de verdade:
+
+```bash
+# terminal A
+cd ../goals-tracker-back && pnpm dev
+# terminal B
+pnpm dev
+# terminal C
+pnpm test:e2e
+```
+
+- `e2e/auth.mjs` — rota protegida redireciona, registro entra, sidebar traz os
+  dados de `/auth/me`, cookie é `httpOnly` e invisível para JS, logado sai de
+  `/login`, sair apaga a sessão e credencial errada mostra a mensagem do backend.
+- `e2e/fluxo-completo.mjs` — cria conta, cadastra livro, concurso, tópico e
+  hábito, confere o percentual, a troca de status, o streak, a agregação do
+  dashboard e da retrospectiva, e que **uma segunda conta não enxerga nada da
+  primeira**.
+
+Ficam **fora do CI** de propósito: dependem dos dois servidores no ar.
 
 ### O que não é testado (ainda)
 
-- Componentes de UI. `@testing-library/react` e `user-event` já estão instalados;
-  os alvos que mais valem são os diálogos de formulário (validação zod + submit)
-  e `streak-heatmap.tsx`.
-- Páginas e navegação.
-- Nada que dependa da API — quando os mocks saírem, o teste de componente vai
-  precisar de mock do cliente HTTP (`src/lib/api.ts`).
+- Componentes de UI isolados. `@testing-library/react` e `user-event` já estão
+  instalados; os alvos que mais valem são os diálogos de formulário e o
+  `streak-heatmap.tsx`. Precisariam de mock do `src/lib/api.ts`.
+- Páginas e navegação fora do que o e2e cobre.
 
 ### Ao escrever teste novo
 
@@ -49,16 +64,39 @@ Dois testes merecem atenção porque documentam armadilhas reais:
   parte dos bugs desta base está aí, não no caminho feliz.
 - Nada de snapshot de markup: quebra a cada ajuste de design e não afirma nada.
 
+## CI
+
+`.github/workflows/ci.yml`, em todo pull request dos dois repos:
+
+| Frontend | Backend |
+|---|---|
+| `pnpm lint` | `pnpm prisma:generate` |
+| `pnpm typecheck` | `pnpm typecheck` |
+| `pnpm test` | `prisma migrate deploy` num banco do zero |
+| `pnpm build` | `prisma migrate status` |
+| | `pnpm test` |
+| | `pnpm smoke` |
+
+No frontend, o **build** é o passo que mais pega coisa: além de compilar, o Next
+resolve as rotas e roda o TypeScript sobre o grafo inteiro.
+
+No backend, aplicar as migrations num banco limpo pega migration esquecida ou
+fora de sincronia com o schema, e o **smoke** pega o que o typecheck não pega —
+que o processo realmente sobe, que o `/health` responde e que rota protegida
+exige token.
+
 ## Backend (vitest)
 
 No repo [goals-tracker-back](https://github.com/devmanucs/goals-tracker-back):
 
 ```bash
-pnpm test
+pnpm test    # vitest
+pnpm smoke   # sobe o servidor e bate no /health
 ```
 
 - `tests/unit/` — funções puras: streak nas três frequências, janelas de período,
-  páginas lidas por delta, progresso de concurso, datas, enums.
+  páginas lidas por delta, progresso de concurso, séries da retrospectiva, datas,
+  enums.
 - `tests/integracao/` — rotas de ponta a ponta com supertest, com destaque para os
   testes de **isolamento entre usuários** (toda rota é verificada contra um segundo
   usuário tentando ler/editar/apagar o recurso do primeiro).

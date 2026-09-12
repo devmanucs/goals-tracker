@@ -7,11 +7,14 @@ import { HabitoDetail } from "@/features/habitos/components/habito-detail"
 export default async function HabitoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
+  let dados
   try {
-    const [habito, registros] = await Promise.all([obterHabito(id), listarRegistros(id)])
-    return <HabitoDetail habito={habito} registros={registros} />
+    dados = await Promise.all([obterHabito(id), listarRegistros(id)])
   } catch (erro) {
     if (erro instanceof ApiError && erro.status === 404) notFound()
     throw erro
   }
+
+  const [habito, registros] = dados
+  return <HabitoDetail habito={habito} registros={registros} />
 }
