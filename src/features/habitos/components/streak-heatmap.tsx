@@ -1,12 +1,15 @@
 import { cn } from "@/lib/utils"
-import type { Habito, RegistroHabito } from "@/features/habitos/data"
-import { progressoDoDia } from "@/features/habitos/data"
-import { formatarDataCompleta, HOJE } from "@/lib/dates"
+import { progressoDoDia, type Habito, type RegistroRecente } from "@/features/habitos/types"
+import { formatarDataCompleta } from "@/lib/dates"
 
 const DIAS_SEMANA = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"]
 
+// O heatmap é visual e relativo a "agora", então usa a data do próprio
+// navegador. Streak e progresso, que são números do produto, vêm da API.
+const HOJE_ISO = new Date().toISOString().slice(0, 10)
+
 function fimDaSemanaAtual() {
-  const hoje = new Date(`${HOJE}T12:00:00`)
+  const hoje = new Date(`${HOJE_ISO}T12:00:00`)
   const d = new Date(hoje)
   d.setDate(hoje.getDate() + (6 - hoje.getDay()))
   return d
@@ -30,7 +33,7 @@ export function StreakHeatmap({
   className,
 }: {
   habito: Habito
-  registros: RegistroHabito[]
+  registros: RegistroRecente[]
   semanas?: number
   className?: string
 }) {
@@ -58,7 +61,7 @@ export function StreakHeatmap({
       <div className="grid grid-flow-col grid-rows-7 gap-[3px]">
         {dias.map((dia) => {
           const iso = isoDe(dia)
-          const futuro = iso > HOJE
+          const futuro = iso > HOJE_ISO
           const { valor, percentual } = progressoDoDia(habito, registros, iso)
 
           return (

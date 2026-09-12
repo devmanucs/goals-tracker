@@ -6,17 +6,11 @@ import type { ReactNode } from "react"
 import { DsBadge } from "@/components/ds/badge"
 import { DsFrame, DsFrameFooter, DsFrameHeader, DsFramePanel, DsFrameTitle } from "@/components/ds/frame"
 import { DsProgress, DsProgressIndicator, DsProgressTrack } from "@/components/ds/progress"
+import type { ResumoDashboard } from "@/features/dashboard/types"
 import { PesoIndicator } from "@/features/estudos/components/peso-indicator"
-import { corDaMateria, diasAteProva, getConcurso, proximoTopico, STATUS_TOPICO_LABEL } from "@/features/estudos/data"
-import { getHabitos, progressoPeriodoAtual, streakDoHabito } from "@/features/habitos/data"
-import {
-  estatisticasLeitura,
-  getRegistrosDoLivro,
-  livroEmAndamento,
-  livrosLidosNoAno,
-  META_ANUAL_LEITURA,
-} from "@/features/leitura/data"
-import { formatarDataCompleta, HOJE } from "@/lib/dates"
+import { corDaMateria, STATUS_TOPICO_LABEL } from "@/features/estudos/types"
+import { corDaCapa, META_ANUAL_LEITURA } from "@/features/leitura/types"
+import { formatarDataCompleta } from "@/lib/dates"
 
 function CardShell({
   href,
@@ -47,9 +41,8 @@ function CardShell({
   )
 }
 
-export function LeituraSummaryCard() {
-  const livro = livroEmAndamento()
-  const stats = estatisticasLeitura()
+export function LeituraSummaryCard({ leitura }: { leitura: ResumoDashboard["leitura"] }) {
+  const livro = leitura.livroAtual
 
   if (!livro) {
     return (
@@ -59,8 +52,8 @@ export function LeituraSummaryCard() {
     )
   }
 
-  const paginaAtual = getRegistrosDoLivro(livro.id).at(-1)?.paginaAtual ?? 0
-  const percentual = Math.round((paginaAtual / livro.totalPaginas) * 100)
+  // paginaAtual e percentual já vêm calculados da API.
+  const { paginaAtual, percentual } = livro
 
   return (
     <CardShell
@@ -81,7 +74,7 @@ export function LeituraSummaryCard() {
       <div className="flex items-start gap-3">
         <span
           className="mt-0.5 h-14 w-10 shrink-0 rounded-lg"
-          style={{ backgroundColor: livro.corCapa }}
+          style={{ backgroundColor: corDaCapa(livro) }}
           aria-hidden
         />
         <div className="min-w-0 flex-1">
@@ -90,14 +83,15 @@ export function LeituraSummaryCard() {
         </div>
       </div>
       <p className="mt-3 text-xs text-muted-foreground">
-        {stats.livrosLidos} livros lidos · meta {HOJE.slice(0, 4)}: {livrosLidosNoAno()}/{META_ANUAL_LEITURA}
+        {leitura.livrosLidos} livros lidos · meta {new Date().getFullYear()}:{" "}
+        {leitura.livrosLidos}/{META_ANUAL_LEITURA}
       </p>
     </CardShell>
   )
 }
 
-export function EstudosSummaryCard() {
-  const topico = proximoTopico()
+export function EstudosSummaryCard({ estudos }: { estudos: ResumoDashboard["estudos"] }) {
+  const topico = estudos.proximoTopico
 
   if (!topico) {
     return (
@@ -107,8 +101,7 @@ export function EstudosSummaryCard() {
     )
   }
 
-  const concurso = getConcurso(topico.concursoId)
-  const dias = concurso ? diasAteProva(concurso.id) : null
+  const { concurso } = topico
 
   return (
     <CardShell href="/estudos" title="Estudos">
@@ -128,24 +121,20 @@ export function EstudosSummaryCard() {
           {STATUS_TOPICO_LABEL[topico.status]}
         </DsBadge>
       </div>
-      {concurso && dias !== null && (
-        <p className="mt-3 text-xs text-muted-foreground">
-          {concurso.titulo} · prova em {dias} dias ({formatarDataCompleta(concurso.dataProva)})
-        </p>
-      )}
+      <p className="mt-3 text-xs text-muted-foreground">
+        {concurso.titulo} · prova em {concurso.diasAteProva} dias (
+        {formatarDataCompleta(concurso.dataProva)})
+      </p>
     </CardShell>
   )
 }
 
-export function HabitosSummaryCard() {
-  const habitos = getHabitos()
-
+export function HabitosSummaryCard({ habitos }: { habitos: ResumoDashboard["habitos"] }) {
   return (
     <CardShell href="/habitos" title="Hábitos">
       <div className="flex flex-col gap-3">
-        {habitos.map((habito) => {
-          const progresso = progressoPeriodoAtual(habito.id)
-          const streak = streakDoHabito(habito.id)
+        {habitos.lista.map((habito) => {
+          const { progresso, streak } = habito
           return (
             <div key={habito.id} className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
@@ -153,7 +142,7 @@ export function HabitosSummaryCard() {
                   <span className="truncate text-sm font-medium">{habito.nome}</span>
                   <span className="flex items-center gap-1 text-xs text-muted-foreground">
                     <HugeiconsIcon icon={Fire03Icon} strokeWidth={2} className="size-3.5" />
-                    {streak}
+                    {streak.atual}
                   </span>
                 </div>
                 <DsProgress value={progresso.percentual} className="mt-1.5">

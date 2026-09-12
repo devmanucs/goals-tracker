@@ -1,15 +1,20 @@
 import { notFound } from "next/navigation"
 
+import { ApiError } from "@/lib/api"
+import { listarRegistros, obterHabito } from "@/features/habitos/api"
 import { HabitoDetail } from "@/features/habitos/components/habito-detail"
-import { getHabito, getRegistrosDoHabito } from "@/features/habitos/data"
 
 export default async function HabitoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const habito = getHabito(id)
 
-  if (!habito) {
-    notFound()
+  let dados
+  try {
+    dados = await Promise.all([obterHabito(id), listarRegistros(id)])
+  } catch (erro) {
+    if (erro instanceof ApiError && erro.status === 404) notFound()
+    throw erro
   }
 
-  return <HabitoDetail habito={habito} registrosIniciais={getRegistrosDoHabito(habito.id)} />
+  const [habito, registros] = dados
+  return <HabitoDetail habito={habito} registros={registros} />
 }

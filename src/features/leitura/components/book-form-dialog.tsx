@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useActionState, useState } from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { PlusSignIcon } from "@hugeicons/core-free-icons"
 
+import { DsAlert, DsAlertDescription } from "@/components/ds/alert"
 import { DsButton } from "@/components/ds/button"
 import {
   DsSheet,
@@ -15,7 +16,7 @@ import {
   DsSheetTitle,
   DsSheetTrigger,
 } from "@/components/ds/sheet"
-import { DsField, DsFieldGroup, DsFieldLabel } from "@/components/ds/field"
+import { DsField, DsFieldDescription, DsFieldGroup, DsFieldLabel } from "@/components/ds/field"
 import { DsInput } from "@/components/ds/input"
 import {
   DsSelect,
@@ -24,45 +25,23 @@ import {
   DsSelectTrigger,
   DsSelectValue,
 } from "@/components/ds/select"
-import type { Livro, StatusLivro } from "@/features/leitura/data"
-import { STATUS_LIVRO_LABEL } from "@/features/leitura/data"
+import { criarLivro, type EstadoDaAcao } from "@/features/leitura/actions"
+import { STATUS_LIVRO_LABEL, type StatusLivro } from "@/features/leitura/types"
 
-const CORES = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"]
+const ESTADO_INICIAL: EstadoDaAcao = {}
 
-export function BookFormDialog({ onAdd }: { onAdd: (livro: Livro) => void }) {
+export function BookFormDialog() {
   const [open, setOpen] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [titulo, setTitulo] = useState("")
-  const [autor, setAutor] = useState("")
-  const [totalPaginas, setTotalPaginas] = useState("")
   const [status, setStatus] = useState<StatusLivro>("quero_ler")
-
-  function reset() {
-    setTitulo("")
-    setAutor("")
-    setTotalPaginas("")
-    setStatus("quero_ler")
-  }
-
-  function handleSubmit(event: React.FormEvent) {
-    event.preventDefault()
-    if (!titulo.trim() || !autor.trim() || !totalPaginas) return
-
-    setSaving(true)
-    setTimeout(() => {
-      onAdd({
-        id: crypto.randomUUID(),
-        titulo: titulo.trim(),
-        autor: autor.trim(),
-        totalPaginas: Number(totalPaginas),
-        status,
-        corCapa: CORES[Math.floor(Math.random() * CORES.length)],
-      })
-      reset()
-      setSaving(false)
-      setOpen(false)
-    }, 400)
-  }
+  // A action revalida a rota; aqui só fechamos a gaveta quando ela dá certo.
+  const [estado, acao, salvando] = useActionState(
+    async (anterior: EstadoDaAcao, formData: FormData) => {
+      const resultado = await criarLivro(anterior, formData)
+      if (resultado.ok) setOpen(false)
+      return resultado
+    },
+    ESTADO_INICIAL,
+  )
 
   return (
     <DsSheet open={open} onOpenChange={setOpen}>
@@ -71,38 +50,57 @@ export function BookFormDialog({ onAdd }: { onAdd: (livro: Livro) => void }) {
         Novo livro
       </DsSheetTrigger>
       <DsSheetContent side="right">
-        <form onSubmit={handleSubmit} className="flex h-full flex-col">
+        {/* key remonta o form a cada abertura, limpando o que sobrou da anterior */}
+        <form key={String(open)} action={acao} className="flex h-full flex-col">
           <DsSheetHeader>
             <DsSheetTitle>Cadastrar livro</DsSheetTitle>
             <DsSheetDescription>Adicione um livro para acompanhar seu progresso de leitura.</DsSheetDescription>
           </DsSheetHeader>
           <DsSheetPanel className="flex-1">
             <DsFieldGroup>
+              {estado.mensagem && (
+                <DsAlert variant="destructive">
+                  <DsAlertDescription>{estado.mensagem}</DsAlertDescription>
+                </DsAlert>
+              )}
               <DsField>
                 <DsFieldLabel htmlFor="titulo">Título</DsFieldLabel>
-                <DsInput id="titulo" value={titulo} onChange={(e) => setTitulo(e.target.value)} required />
+                <DsInput id="titulo" name="titulo" aria-invalid={Boolean(estado.erros?.titulo)} required />
+                {estado.erros?.titulo && (
+                  <DsFieldDescription className="text-destructive">{estado.erros.titulo}</DsFieldDescription>
+                )}
               </DsField>
               <DsField>
                 <DsFieldLabel htmlFor="autor">Autor</DsFieldLabel>
-                <DsInput id="autor" value={autor} onChange={(e) => setAutor(e.target.value)} required />
+                <DsInput id="autor" name="autor" aria-invalid={Boolean(estado.erros?.autor)} required />
+                {estado.erros?.autor && (
+                  <DsFieldDescription className="text-destructive">{estado.erros.autor}</DsFieldDescription>
+                )}
               </DsField>
               <DsField orientation="responsive">
                 <DsField>
-                  <DsFieldLabel htmlFor="paginas">Total de páginas</DsFieldLabel>
+                  <DsFieldLabel htmlFor="totalPaginas">Total de páginas</DsFieldLabel>
                   <DsInput
-                    id="paginas"
+                    id="totalPaginas"
+                    name="totalPaginas"
                     type="number"
                     min={1}
-                    value={totalPaginas}
-                    onChange={(e) => setTotalPaginas(e.target.value)}
+                    aria-invalid={Boolean(estado.erros?.totalPaginas)}
                     required
                   />
+                  {estado.erros?.totalPaginas && (
+                    <DsFieldDescription className="text-destructive">
+                      {estado.erros.totalPaginas}
+                    </DsFieldDescription>
+                  )}
                 </DsField>
                 <DsField>
                   <DsFieldLabel htmlFor="status">Status</DsFieldLabel>
+                  {/* O Select não é um input nativo, então o valor vai num hidden */}
+                  <input type="hidden" name="status" value={status} />
                   <DsSelect value={status} onValueChange={(value) => setStatus(value as StatusLivro)}>
                     <DsSelectTrigger id="status" className="w-full">
-                      <DsSelectValue />
+                      <DsSelectValue>{(valor) => STATUS_LIVRO_LABEL[valor as StatusLivro]}</DsSelectValue>
                     </DsSelectTrigger>
                     <DsSelectContent>
                       {Object.entries(STATUS_LIVRO_LABEL).map(([value, label]) => (
@@ -117,7 +115,7 @@ export function BookFormDialog({ onAdd }: { onAdd: (livro: Livro) => void }) {
             </DsFieldGroup>
           </DsSheetPanel>
           <DsSheetFooter>
-            <DsButton type="submit" loading={saving}>
+            <DsButton type="submit" loading={salvando}>
               Salvar
             </DsButton>
           </DsSheetFooter>

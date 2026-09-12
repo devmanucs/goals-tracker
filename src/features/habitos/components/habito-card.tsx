@@ -5,18 +5,11 @@ import { Fire03Icon } from "@hugeicons/core-free-icons"
 import { DsFrame, DsFrameFooter, DsFrameHeader, DsFramePanel, DsFrameTitle } from "@/components/ds/frame"
 import { DsProgress, DsProgressIndicator, DsProgressTrack } from "@/components/ds/progress"
 import { StreakHeatmap } from "@/features/habitos/components/streak-heatmap"
-import type { Habito } from "@/features/habitos/data"
-import {
-  FREQUENCIA_LABEL,
-  getRegistrosDoHabito,
-  progressoPeriodoAtual,
-  streakDoHabito,
-} from "@/features/habitos/data"
+import { FREQUENCIA_LABEL, type Habito } from "@/features/habitos/types"
 
+// progresso, streak e registrosRecentes vêm prontos da API junto do hábito.
 export function HabitoCard({ habito }: { habito: Habito }) {
-  const progresso = progressoPeriodoAtual(habito.id)
-  const streak = streakDoHabito(habito.id)
-  const registros = getRegistrosDoHabito(habito.id)
+  const { progresso, streak, registrosRecentes: registros } = habito
 
   return (
     <Link href={`/habitos/${habito.id}`} className="group block h-full">
@@ -25,7 +18,7 @@ export function HabitoCard({ habito }: { habito: Habito }) {
           <DsFrameTitle>{habito.nome}</DsFrameTitle>
           <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
             <HugeiconsIcon icon={Fire03Icon} strokeWidth={2} className="size-3.5" />
-            {streak}
+            {streak.atual}
           </span>
         </DsFrameHeader>
         <DsFramePanel className="flex flex-1 flex-col gap-3">

@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "test:e2e": "node e2e/auth.mjs && node e2e/fluxo-completo.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -40,6 +41,7 @@
     "react-dom": "19.2.4",
     "react-resizable-panels": "^4.12.2",
     "recharts": "^3.8.0",
+    "server-only": "^0.0.1",
     "shadcn": "^4.17.0",
     "sonner": "^2.0.8",
     "tailwind-merge": "^3.6.0",
@@ -60,9 +62,11 @@
     "eslint-config-next": "16.2.6",
     "jest": "^30.5.1",
     "jest-environment-jsdom": "^30.5.1",
+    "playwright": "^1.63.0",
     "prettier": "^3.8.3",
     "prettier-plugin-tailwindcss": "^0.8.0",
     "tailwindcss": "^4",
     "typescript": "^5"
-  }
+  },
+  "packageManager": "pnpm@10.33.0"
 }

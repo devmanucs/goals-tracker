@@ -3,11 +3,11 @@ import Link from "next/link"
 import { DsBadge } from "@/components/ds/badge"
 import { DsFrame, DsFrameFooter, DsFrameHeader, DsFramePanel, DsFrameTitle } from "@/components/ds/frame"
 import { DsProgress, DsProgressIndicator, DsProgressTrack } from "@/components/ds/progress"
-import type { Livro } from "@/features/leitura/data"
-import { STATUS_LIVRO_LABEL } from "@/features/leitura/data"
+import { corDaCapa, STATUS_LIVRO_LABEL, type Livro } from "@/features/leitura/types"
 
-export function BookCard({ livro, paginaAtual }: { livro: Livro; paginaAtual: number }) {
-  const percentual = Math.round((paginaAtual / livro.totalPaginas) * 100)
+// paginaAtual e percentual vêm prontos da API junto do livro, então o card não
+// precisa de nenhuma requisição extra.
+export function BookCard({ livro }: { livro: Livro }) {
   const emProgresso = livro.status === "lendo" || livro.status === "lido"
 
   return (
@@ -20,7 +20,7 @@ export function BookCard({ livro, paginaAtual }: { livro: Livro; paginaAtual: nu
           <div
             className="h-20 w-14 shrink-0 rounded-sm"
             style={{
-              backgroundColor: livro.corCapa,
+              backgroundColor: corDaCapa(livro),
               boxShadow: "inset -4px 0 8px -4px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.15)",
             }}
           />
@@ -33,11 +33,11 @@ export function BookCard({ livro, paginaAtual }: { livro: Livro; paginaAtual: nu
         </DsFramePanel>
         {emProgresso && (
           <DsFrameFooter>
-            <DsProgress value={percentual}>
+            <DsProgress value={livro.percentual}>
               <span className="text-xs text-muted-foreground">
-                {paginaAtual}/{livro.totalPaginas} pág.
+                {livro.paginaAtual}/{livro.totalPaginas} pág.
               </span>
-              <span className="ml-auto text-xs font-medium tabular-nums">{percentual}%</span>
+              <span className="ml-auto text-xs font-medium tabular-nums">{livro.percentual}%</span>
               <DsProgressTrack>
                 <DsProgressIndicator />
               </DsProgressTrack>

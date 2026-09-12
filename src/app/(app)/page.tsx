@@ -1,47 +1,56 @@
 import { Book02Icon, BookOpen01Icon, Fire03Icon, GraduationCapIcon } from "@hugeicons/core-free-icons"
 
-import { AppHeader } from "@/components/app-header"
+import { DefinirBreadcrumb } from "@/components/breadcrumb-context"
 import { StatStrip } from "@/components/stat-card"
-import { formatarDataCompleta } from "@/lib/dates"
-import { estatisticasLeitura } from "@/features/leitura/data"
-import { concursos, diasAteProva } from "@/features/estudos/data"
-import { getHabitos, streakDoHabito } from "@/features/habitos/data"
+import { resumoDashboard } from "@/features/dashboard/api"
 import {
   EstudosSummaryCard,
   HabitosSummaryCard,
   LeituraSummaryCard,
 } from "@/features/dashboard/components/module-cards"
+import { usuarioLogado } from "@/features/auth/data"
 
-export default function DashboardPage() {
-  const leitura = estatisticasLeitura()
-  const habitos = getHabitos()
-  const maiorStreak = Math.max(0, ...habitos.map((h) => streakDoHabito(h.id)))
-  const proximoConcurso = [...concursos].sort(
-    (a, b) => (diasAteProva(a.id) ?? Infinity) - (diasAteProva(b.id) ?? Infinity)
-  )[0]
+export default async function DashboardPage() {
+  // Uma requisição para a tela inteira: o backend agrega os três módulos.
+  const [usuario, resumo] = await Promise.all([usuarioLogado(), resumoDashboard()])
+
+  const maiorStreak = Math.max(0, ...resumo.habitos.lista.map((h) => h.streak.atual))
+  const proximaProva = resumo.estudos.proximoTopico?.concurso
+
+  const hoje = new Date().toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  })
 
   return (
-    <div className="flex min-h-svh flex-col">
-      <AppHeader items={[{ label: "Dashboard" }]} />
+    <div className="flex flex-1 flex-col">
+      <DefinirBreadcrumb items={[{ label: "Dashboard" }]} />
       <div className="flex flex-1 flex-col gap-6 p-6 md:p-8">
         <div>
-          <h2 className="font-heading text-xl font-medium">Olá, Manuella</h2>
+          <h2 className="font-heading text-xl font-medium">
+            Olá, {usuario.nome.split(" ")[0]}
+          </h2>
           <p className="text-sm text-muted-foreground">
-            Resumo do seu progresso — hoje é {formatarDataCompleta("2026-08-13")}.
+            Resumo do seu progresso — hoje é {hoje}.
           </p>
         </div>
 
         <StatStrip
           stats={[
-            { label: "Livros lidos", value: leitura.livrosLidos, icon: Book02Icon },
-            { label: "Páginas lidas", value: leitura.paginasLidasTotal, icon: BookOpen01Icon },
+            { label: "Livros lidos", value: resumo.leitura.livrosLidos, icon: Book02Icon },
+            {
+              label: "Páginas lidas",
+              value: resumo.leitura.paginasLidasTotal,
+              icon: BookOpen01Icon,
+            },
             { label: "Maior streak ativo", value: maiorStreak, icon: Fire03Icon },
-            ...(proximoConcurso
+            ...(proximaProva
               ? [
                   {
                     label: "Dias até a prova",
-                    value: diasAteProva(proximoConcurso.id) ?? 0,
-                    hint: proximoConcurso.titulo,
+                    value: proximaProva.diasAteProva,
+                    hint: proximaProva.titulo,
                     icon: GraduationCapIcon,
                   },
                 ]
@@ -50,9 +59,9 @@ export default function DashboardPage() {
         />
 
         <section className="grid gap-4 lg:grid-cols-3">
-          <LeituraSummaryCard />
-          <EstudosSummaryCard />
-          <HabitosSummaryCard />
+          <LeituraSummaryCard leitura={resumo.leitura} />
+          <EstudosSummaryCard estudos={resumo.estudos} />
+          <HabitosSummaryCard habitos={resumo.habitos} />
         </section>
       </div>
     </div>

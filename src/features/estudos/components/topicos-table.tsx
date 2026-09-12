@@ -1,5 +1,6 @@
 "use client"
 
+import { useTransition } from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { BookOpen01Icon, CheckmarkCircle02Icon, Clock01Icon, Refresh01Icon } from "@hugeicons/core-free-icons"
 
@@ -11,8 +12,13 @@ import {
   DsSelectValue,
 } from "@/components/ds/select"
 import { DsTable, DsTableBody, DsTableCell, DsTableHead, DsTableHeader, DsTableRow } from "@/components/ds/table"
-import type { StatusTopico, TopicoEstudo } from "@/features/estudos/data"
-import { corDaMateria, STATUS_TOPICO_LABEL } from "@/features/estudos/data"
+import { atualizarStatusDoTopico } from "@/features/estudos/actions"
+import {
+  corDaMateria,
+  STATUS_TOPICO_LABEL,
+  type StatusTopico,
+  type TopicoEstudo,
+} from "@/features/estudos/types"
 import { formatarData } from "@/lib/dates"
 import { PesoIndicator } from "@/features/estudos/components/peso-indicator"
 
@@ -25,11 +31,14 @@ export const STATUS_ICON: Record<StatusTopico, typeof Clock01Icon> = {
 
 export function TopicosTable({
   topicos,
-  onStatusChange,
+  concursoId,
 }: {
   topicos: TopicoEstudo[]
-  onStatusChange: (topicoId: string, status: StatusTopico) => void
+  concursoId: string
 }) {
+  // A action revalida a rota, então a tabela recebe o dado novo do servidor —
+  // não há cópia local do status para sair de sincronia.
+  const [salvando, iniciar] = useTransition()
   const ordenados = [...topicos].sort((a, b) => b.peso - a.peso)
 
   return (
@@ -64,11 +73,18 @@ export function TopicosTable({
             <DsTableCell>
               <DsSelect
                 value={topico.status}
-                onValueChange={(value) => onStatusChange(topico.id, value as StatusTopico)}
+                disabled={salvando}
+                onValueChange={(value) =>
+                  iniciar(() =>
+                    void atualizarStatusDoTopico(topico.id, concursoId, String(value)),
+                  )
+                }
               >
                 <DsSelectTrigger size="sm">
                   <HugeiconsIcon icon={STATUS_ICON[topico.status]} strokeWidth={2} className="size-3.5" />
-                  <DsSelectValue />
+                  <DsSelectValue>
+                    {(valor) => STATUS_TOPICO_LABEL[valor as StatusTopico]}
+                  </DsSelectValue>
                 </DsSelectTrigger>
                 <DsSelectContent>
                   {Object.entries(STATUS_TOPICO_LABEL).map(([value, label]) => (

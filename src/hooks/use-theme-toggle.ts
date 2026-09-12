@@ -3,11 +3,8 @@
 import { useCallback } from "react"
 import { useTheme } from "next-themes"
 
-declare global {
-  interface Document {
-    startViewTransition?: (callback: () => void) => { ready: Promise<void> }
-  }
-}
+// Document.startViewTransition já vem tipado no lib.dom (e como opcional, para
+// navegadores sem suporte), então não há o que declarar aqui.
 
 const STYLE_ID = "theme-transition-styles"
 
