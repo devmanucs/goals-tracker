@@ -1,4 +1,4 @@
-import { diasEntre, HOJE } from "@/lib/dates"
+import { compararDatas, diasEntre, HOJE } from "@/lib/dates"
 
 export type FrequenciaHabito = "diaria" | "semanal" | "mensal"
 
@@ -59,7 +59,7 @@ export function getHabito(id: string) {
 export function getRegistrosDoHabito(habitoId: string) {
   return registrosHabito
     .filter((r) => r.habitoId === habitoId)
-    .sort((a, b) => diasEntre(a.data, b.data))
+    .sort((a, b) => compararDatas(a.data, b.data))
 }
 
 function inicioDoPeriodo(habito: Habito) {

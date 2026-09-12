@@ -1,4 +1,4 @@
-import { diasEntre, parseDate } from "@/lib/dates"
+import { compararDatas, parseDate } from "@/lib/dates"
 import { livros, registrosLeitura } from "@/features/leitura/data"
 import { topicos } from "@/features/estudos/data"
 import { getHabitos, getRegistrosDoHabito, streakDoHabito } from "@/features/habitos/data"
@@ -29,7 +29,7 @@ export function paginasLidasPorMes(quantidade = 6) {
   const paginasPorRegistro = registrosLeitura.map((r, _i, arr) => {
     const anterior = arr
       .filter((o) => o.livroId === r.livroId && o.data < r.data)
-      .sort((a, b) => diasEntre(a.data, b.data))
+      .sort((a, b) => compararDatas(a.data, b.data))
       .at(-1)
     return { mes: chaveDoMes(r.data), paginas: Math.max(0, r.paginaAtual - (anterior?.paginaAtual ?? 0)) }
   })
@@ -72,7 +72,7 @@ export function resumoRetrospectiva() {
   const paginasLidas = registrosLeitura.reduce((acc, r, _i, arr) => {
     const anterior = arr
       .filter((o) => o.livroId === r.livroId && o.data < r.data)
-      .sort((a, b) => diasEntre(a.data, b.data))
+      .sort((a, b) => compararDatas(a.data, b.data))
       .at(-1)
     return acc + Math.max(0, r.paginaAtual - (anterior?.paginaAtual ?? 0))
   }, 0)
