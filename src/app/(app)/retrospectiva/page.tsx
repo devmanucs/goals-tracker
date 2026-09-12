@@ -1,4 +1,4 @@
-import { AppHeader } from "@/components/app-header"
+import { DefinirBreadcrumb } from "@/components/breadcrumb-context"
 import { DsCard, DsCardContent } from "@/components/ds/card"
 import { Illustration } from "@/components/illustration"
 import { StatStrip } from "@/components/stat-card"
@@ -11,8 +11,8 @@ export default async function RetrospectivaPage() {
   const { resumo } = dozeMeses
 
   return (
-    <div className="flex min-h-svh flex-col">
-      <AppHeader items={[{ label: "Retrospectiva" }]} />
+    <div className="flex flex-1 flex-col">
+      <DefinirBreadcrumb items={[{ label: "Retrospectiva" }]} />
       <div className="flex flex-1 flex-col gap-6 p-6 md:p-8">
         <h1 className="font-heading text-xl font-medium">Retrospectiva</h1>
         <DsCard className="overflow-hidden">

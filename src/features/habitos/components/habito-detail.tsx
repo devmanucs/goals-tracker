@@ -4,7 +4,7 @@ import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Fire03Icon } from "@hugeicons/core-free-icons"
 
-import { AppHeader } from "@/components/app-header"
+import { DefinirBreadcrumb } from "@/components/breadcrumb-context"
 import { DsCard, DsCardContent, DsCardHeader, DsCardTitle } from "@/components/ds/card"
 import { DsChartContainer, DsChartTooltip, DsChartTooltipContent } from "@/components/ds/chart"
 import { DsItem, DsItemContent, DsItemGroup, DsItemTitle } from "@/components/ds/item"
@@ -32,8 +32,8 @@ export function HabitoDetail({
   }))
 
   return (
-    <div className="flex min-h-svh flex-col">
-      <AppHeader items={[{ label: "Hábitos", href: "/habitos" }, { label: habito.nome }]} />
+    <div className="flex flex-1 flex-col">
+      <DefinirBreadcrumb items={[{ label: "Hábitos", href: "/habitos" }, { label: habito.nome }]} />
 
       <div className="flex flex-1 flex-col gap-6 p-6 md:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">

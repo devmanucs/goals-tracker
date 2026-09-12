@@ -1,4 +1,4 @@
-import { AppHeader } from "@/components/app-header"
+import { DefinirBreadcrumb } from "@/components/breadcrumb-context"
 import {
   DsEmpty,
   DsEmptyContent,
@@ -16,8 +16,8 @@ export default async function EstudosPage() {
   const concursos = await listarConcursos()
 
   return (
-    <div className="flex min-h-svh flex-col">
-      <AppHeader items={[{ label: "Estudos" }]} />
+    <div className="flex flex-1 flex-col">
+      <DefinirBreadcrumb items={[{ label: "Estudos" }]} />
       <div className="flex flex-1 flex-col gap-6 p-6 md:p-8">
         <div className="flex items-center justify-between gap-4">
           <h1 className="font-heading text-xl font-medium">Estudos</h1>

@@ -2,7 +2,7 @@
 
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
 
-import { AppHeader } from "@/components/app-header"
+import { DefinirBreadcrumb } from "@/components/breadcrumb-context"
 import { DsCard, DsCardContent, DsCardHeader, DsCardTitle } from "@/components/ds/card"
 import { DsChartContainer, DsChartTooltip, DsChartTooltipContent } from "@/components/ds/chart"
 import { DsItem, DsItemContent, DsItemDescription, DsItemGroup, DsItemMedia, DsItemTitle } from "@/components/ds/item"
@@ -32,8 +32,8 @@ export function LivroDetail({
   }))
 
   return (
-    <div className="flex min-h-svh flex-col">
-      <AppHeader items={[{ label: "Leitura", href: "/leitura" }, { label: livro.titulo }]} />
+    <div className="flex flex-1 flex-col">
+      <DefinirBreadcrumb items={[{ label: "Leitura", href: "/leitura" }, { label: livro.titulo }]} />
 
       <div className="flex flex-1 flex-col gap-6 p-6 md:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">

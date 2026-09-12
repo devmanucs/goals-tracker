@@ -1,6 +1,6 @@
 import { Book02Icon, BookOpen01Icon, Fire03Icon, GraduationCapIcon } from "@hugeicons/core-free-icons"
 
-import { AppHeader } from "@/components/app-header"
+import { DefinirBreadcrumb } from "@/components/breadcrumb-context"
 import { StatStrip } from "@/components/stat-card"
 import { resumoDashboard } from "@/features/dashboard/api"
 import {
@@ -24,8 +24,8 @@ export default async function DashboardPage() {
   })
 
   return (
-    <div className="flex min-h-svh flex-col">
-      <AppHeader items={[{ label: "Dashboard" }]} />
+    <div className="flex flex-1 flex-col">
+      <DefinirBreadcrumb items={[{ label: "Dashboard" }]} />
       <div className="flex flex-1 flex-col gap-6 p-6 md:p-8">
         <div>
           <h2 className="font-heading text-xl font-medium">

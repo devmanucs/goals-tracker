@@ -36,11 +36,16 @@ export function NavUser({ usuario }: { usuario: { nome: string; email: string } 
             <DsAvatar className="size-8">
               <DsAvatarFallback className="text-xs">{initials}</DsAvatarFallback>
             </DsAvatar>
-            <div className="grid flex-1 text-left text-sm leading-tight">
+            {/* Some quando a sidebar está recolhida, para não vazar sob o avatar */}
+            <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
               <span className="truncate font-medium">{usuario.nome}</span>
               <span className="truncate text-xs text-muted-foreground">{usuario.email}</span>
             </div>
-            <HugeiconsIcon icon={MoreVerticalCircle01Icon} strokeWidth={2} className="ml-auto size-4" />
+            <HugeiconsIcon
+              icon={MoreVerticalCircle01Icon}
+              strokeWidth={2}
+              className="ml-auto size-4 group-data-[collapsible=icon]:hidden"
+            />
           </DsDropdownMenuTrigger>
           <DsDropdownMenuContent className="min-w-56" side={isMobile ? "bottom" : "right"} align="end" sideOffset={4}>
             <DsDropdownMenuGroup>

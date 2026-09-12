@@ -1,4 +1,4 @@
-import { AppHeader } from "@/components/app-header"
+import { DefinirBreadcrumb } from "@/components/breadcrumb-context"
 import { DsEmpty, DsEmptyContent, DsEmptyDescription, DsEmptyHeader, DsEmptyMedia, DsEmptyTitle } from "@/components/ds/empty"
 import { DsFramePanel } from "@/components/ds/frame"
 import { Illustration } from "@/components/illustration"
@@ -37,8 +37,8 @@ export default async function LeituraPage({
   const ano = new Date().getFullYear()
 
   return (
-    <div className="flex min-h-svh flex-col">
-      <AppHeader items={[{ label: "Leitura" }]} />
+    <div className="flex flex-1 flex-col">
+      <DefinirBreadcrumb items={[{ label: "Leitura" }]} />
       <div className="flex flex-1 flex-col gap-6 p-6 md:p-8">
         <div className="flex items-center justify-between gap-4">
           <h1 className="font-heading text-xl font-medium">Leitura</h1>

@@ -64,9 +64,38 @@ onde uma decisão de estilo pode ser tomada uma vez e valer para o app inteiro.
 
 ## Shell da aplicação
 
-`src/app/(app)/layout.tsx` monta `DsSidebarProvider` + `AppSidebar` + `DsSidebarInset`.
-A sidebar é `collapsible="icon"` e tem cinco destinos fixos: Dashboard, Leitura,
-Estudos, Hábitos, Retrospectiva.
+`src/app/(app)/layout.tsx` monta, nesta ordem:
+
+```
+BreadcrumbProvider
+  DsSidebarProvider (em coluna)
+    AppTopbar                    ← barra fina, atravessa a largura inteira
+    div (linha)
+      AppSidebar                 ← colapsável para ícones
+      DsSidebarInset → children
+```
+
+O provider da sidebar envolve o topbar também, porque é lá que fica o gatilho de
+recolher — daí ele virar coluna em vez da linha padrão.
+
+**Topbar** (`app-topbar.tsx`, altura 11): gatilho de recolher, trilha de
+navegação, busca e alternância de tema. É a única barra do app — as páginas não
+desenham header próprio.
+
+**Trilha de navegação**: o topbar vive no layout, acima das páginas, e Server
+Component não passa dado para cima. Cada página registra suas migalhas por
+contexto com `<DefinirBreadcrumb items={[...]} />`, que não renderiza nada.
+
+**Busca (Ctrl K)**: `command-menu.tsx` abre uma paleta com as seções e com os
+livros, concursos e hábitos da pessoa. O índice vem de `/api/busca`, um Route
+Handler — a paleta é componente de cliente e não fala com a API direto, porque o
+token está num cookie httpOnly. É carregado na primeira abertura, não em toda
+navegação.
+
+**Sidebar** (`app-sidebar.tsx`): `collapsible="icon"`, marca com nome e subtítulo
+no topo, navegação em três grupos rotulados e separados por divisória — Geral
+(Dashboard), Acompanhamento (Leitura, Estudos, Hábitos) e Análise
+(Retrospectiva) — e o menu do usuário no rodapé, com Sair. Ctrl+B recolhe.
 
 Ícones: **HugeIcons** (`@hugeicons/react` + `@hugeicons/core-free-icons`), sempre
 via `<HugeiconsIcon icon={X} strokeWidth={2} />`. Não misture outra biblioteca de ícone.
@@ -75,7 +104,7 @@ via `<HugeiconsIcon icon={X} strokeWidth={2} />`. Não misture outra biblioteca 
 
 Toda tela de módulo segue a mesma espinha:
 
-1. **Cabeçalho** — título + ação principal (um botão só).
+1. **Cabeçalho** — `<DefinirBreadcrumb />` + título + ação principal (um botão só).
 2. **`StatStrip`** — faixa de 4 métricas com `CountUp` animado
    ([`src/components/stat-card.tsx`](../src/components/stat-card.tsx)).
 3. **Conteúdo** — grid de cards, tabela ou calendário, conforme o módulo.

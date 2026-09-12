@@ -3,7 +3,7 @@
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Calendar03Icon } from "@hugeicons/core-free-icons"
 
-import { AppHeader } from "@/components/app-header"
+import { DefinirBreadcrumb } from "@/components/breadcrumb-context"
 import { DsFrame, DsFramePanel } from "@/components/ds/frame"
 import { DsTabs, DsTabsContent, DsTabsList, DsTabsTrigger } from "@/components/ds/tabs"
 import { CalendarioTopicos } from "@/features/estudos/components/calendario-topicos"
@@ -32,8 +32,8 @@ export function ConcursoDetail({
   const dias = concurso.diasAteProva
 
   return (
-    <div className="flex min-h-svh flex-col">
-      <AppHeader items={[{ label: "Estudos", href: "/estudos" }, { label: concurso.titulo }]} />
+    <div className="flex flex-1 flex-col">
+      <DefinirBreadcrumb items={[{ label: "Estudos", href: "/estudos" }, { label: concurso.titulo }]} />
 
       <div className="flex flex-1 flex-col gap-6 p-6 md:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
