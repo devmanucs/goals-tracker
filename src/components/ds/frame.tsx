@@ -8,6 +8,7 @@ import {
   FramePanel,
   FrameTitle,
 } from "@/components/ui/frame"
+import { cn } from "@/lib/utils"
 
 export type DsFrameProps = React.ComponentProps<typeof Frame>
 export function DsFrame(props: DsFrameProps) {
@@ -25,8 +26,8 @@ export function DsFrameHeader(props: DsFrameHeaderProps) {
 }
 
 export type DsFrameTitleProps = React.ComponentProps<typeof FrameTitle>
-export function DsFrameTitle(props: DsFrameTitleProps) {
-  return <FrameTitle {...props} />
+export function DsFrameTitle({ className, ...props }: DsFrameTitleProps) {
+  return <FrameTitle className={cn("font-heading", className)} {...props} />
 }
 
 export type DsFrameDescriptionProps = React.ComponentProps<typeof FrameDescription>

@@ -15,6 +15,17 @@ export function diasEntre(a: string, b: string) {
   return Math.round(ms / (1000 * 60 * 60 * 24))
 }
 
+/**
+ * Comparador para `Array.sort`, do mais antigo para o mais recente.
+ *
+ * Não use `diasEntre` como comparador: ele devolve `b - a`, ou seja, ordena
+ * ao contrário — e um `.at(-1)` depois disso devolve o registro mais ANTIGO
+ * em vez do mais recente. Datas ISO ordenam corretamente como texto.
+ */
+export function compararDatas(a: string, b: string) {
+  return a.localeCompare(b)
+}
+
 export function formatarData(iso: string, options?: Intl.DateTimeFormatOptions) {
   return parseDate(iso).toLocaleDateString("pt-BR", options ?? { day: "2-digit", month: "short" })
 }

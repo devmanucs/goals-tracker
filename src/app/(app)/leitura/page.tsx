@@ -4,6 +4,7 @@ import { useMemo, useState } from "react"
 
 import { AppHeader } from "@/components/app-header"
 import { DsEmpty, DsEmptyContent, DsEmptyDescription, DsEmptyHeader, DsEmptyMedia, DsEmptyTitle } from "@/components/ds/empty"
+import { DsFramePanel } from "@/components/ds/frame"
 import { DsTabs, DsTabsList, DsTabsTrigger } from "@/components/ds/tabs"
 import { Illustration } from "@/components/illustration"
 import { StatStrip } from "@/components/stat-card"
@@ -13,9 +14,12 @@ import type { Livro, StatusLivro } from "@/features/leitura/data"
 import {
   estatisticasLeitura,
   livros as livrosIniciais,
+  livrosLidosNoAno,
+  META_ANUAL_LEITURA,
   paginaAtualDoLivro,
   STATUS_LIVRO_LABEL,
 } from "@/features/leitura/data"
+import { HOJE } from "@/lib/dates"
 
 const FILTROS: Array<{ value: StatusLivro | "todos"; label: string }> = [
   { value: "todos", label: "Todos" },
@@ -30,6 +34,9 @@ export default function LeituraPage() {
   const [filtro, setFiltro] = useState<StatusLivro | "todos">("todos")
 
   const stats = useMemo(() => estatisticasLeitura(), [])
+  const lidosNoAno = useMemo(() => livrosLidosNoAno(), [])
+  const metaPercentual = Math.min(100, Math.round((lidosNoAno / META_ANUAL_LEITURA) * 100))
+  const ano = HOJE.slice(0, 4)
   const livrosFiltrados = useMemo(
     () => (filtro === "todos" ? livros : livros.filter((l) => l.status === filtro)),
     [livros, filtro]
@@ -49,6 +56,22 @@ export default function LeituraPage() {
           <EmptyLeitura onAdd={(livro) => setLivros((prev) => [livro, ...prev])} />
         ) : (
           <>
+            <DsFramePanel className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Meta de leitura {ano}</p>
+                <p className="mt-0.5">
+                  <span className="font-heading text-lg font-medium tabular-nums">{lidosNoAno}</span>
+                  <span className="text-sm text-muted-foreground"> de {META_ANUAL_LEITURA} livros</span>
+                </p>
+              </div>
+              <div className="h-2 w-full max-w-52 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-[width] duration-300"
+                  style={{ width: `${metaPercentual}%` }}
+                />
+              </div>
+            </DsFramePanel>
+
             <StatStrip
               stats={[
                 { label: "Lendo agora", value: stats.livrosLendo },

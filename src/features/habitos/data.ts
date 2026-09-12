@@ -1,4 +1,4 @@
-import { diasEntre, HOJE } from "@/lib/dates"
+import { compararDatas, diasEntre, HOJE } from "@/lib/dates"
 
 export type FrequenciaHabito = "diaria" | "semanal" | "mensal"
 
@@ -59,7 +59,7 @@ export function getHabito(id: string) {
 export function getRegistrosDoHabito(habitoId: string) {
   return registrosHabito
     .filter((r) => r.habitoId === habitoId)
-    .sort((a, b) => diasEntre(a.data, b.data))
+    .sort((a, b) => compararDatas(a.data, b.data))
 }
 
 function inicioDoPeriodo(habito: Habito) {
@@ -109,6 +109,17 @@ export function streakDoHabito(habitoId: string) {
     }
   }
   return streak
+}
+
+export function progressoDoDia(habito: Habito, registros: RegistroHabito[], data: string) {
+  const valor = registros.filter((r) => r.data === data).reduce((acc, r) => acc + r.valor, 0)
+  const referencia =
+    habito.frequencia === "diaria"
+      ? habito.metaValor
+      : habito.frequencia === "semanal"
+        ? habito.metaValor / 7
+        : habito.metaValor / 30
+  return { valor, percentual: referencia > 0 ? Math.min(1, valor / referencia) : 0 }
 }
 
 function calcularStreakAgrupado(habitoId: string) {

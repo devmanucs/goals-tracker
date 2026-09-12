@@ -11,6 +11,7 @@ import { DsChartContainer, DsChartTooltip, DsChartTooltipContent } from "@/compo
 import { DsItem, DsItemContent, DsItemGroup, DsItemTitle } from "@/components/ds/item"
 import { DsProgress, DsProgressIndicator, DsProgressTrack } from "@/components/ds/progress"
 import { AddRegistroHabitoDialog } from "@/features/habitos/components/add-registro-habito-dialog"
+import { StreakHeatmap } from "@/features/habitos/components/streak-heatmap"
 import type { Habito, RegistroHabito } from "@/features/habitos/data"
 import { FREQUENCIA_LABEL } from "@/features/habitos/data"
 import { diasEntre, formatarData, formatarDataCompleta, HOJE } from "@/lib/dates"
@@ -126,6 +127,15 @@ export function HabitoDetail({
             </DsCardContent>
           </DsCard>
         </section>
+
+        <DsCard>
+          <DsCardHeader>
+            <DsCardTitle>Consistência</DsCardTitle>
+          </DsCardHeader>
+          <DsCardContent className="overflow-x-auto">
+            <StreakHeatmap habito={habito} registros={registros} semanas={12} />
+          </DsCardContent>
+        </DsCard>
 
         {chartData.length > 1 && (
           <DsCard>

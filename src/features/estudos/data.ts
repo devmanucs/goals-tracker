@@ -1,4 +1,4 @@
-import { diasEntre, HOJE } from "@/lib/dates"
+import { compararDatas, diasEntre, HOJE } from "@/lib/dates"
 
 export type StatusTopico = "pendente" | "estudando" | "estudado" | "revisao"
 
@@ -25,6 +25,20 @@ export const STATUS_TOPICO_LABEL: Record<StatusTopico, string> = {
   estudando: "Estudando",
   estudado: "Estudado",
   revisao: "Revisão",
+}
+
+const CORES_MATERIA = [
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
+]
+
+export function corDaMateria(materia: string) {
+  let hash = 0
+  for (let i = 0; i < materia.length; i++) hash = (hash * 31 + materia.charCodeAt(i)) >>> 0
+  return CORES_MATERIA[hash % CORES_MATERIA.length]
 }
 
 export const concursos: Concurso[] = [
@@ -78,7 +92,7 @@ export function getTopicosPorPeso(concursoId: string) {
 export function proximoTopico() {
   return topicos
     .filter((t) => t.status !== "estudado" && diasEntre(HOJE, t.dataAgendada) >= 0)
-    .sort((a, b) => diasEntre(a.dataAgendada, b.dataAgendada))[0]
+    .sort((a, b) => compararDatas(a.dataAgendada, b.dataAgendada))[0]
 }
 
 export function progressoConcurso(concursoId: string) {
