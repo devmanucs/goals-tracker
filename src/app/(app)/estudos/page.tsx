@@ -1,7 +1,3 @@
-"use client"
-
-import { useState } from "react"
-
 import { AppHeader } from "@/components/app-header"
 import {
   DsEmpty,
@@ -12,13 +8,12 @@ import {
   DsEmptyTitle,
 } from "@/components/ds/empty"
 import { Illustration } from "@/components/illustration"
+import { listarConcursos } from "@/features/estudos/api"
 import { ConcursoCard } from "@/features/estudos/components/concurso-card"
 import { ConcursoFormDialog } from "@/features/estudos/components/concurso-form-dialog"
-import type { Concurso } from "@/features/estudos/data"
-import { concursos as concursosIniciais } from "@/features/estudos/data"
 
-export default function EstudosPage() {
-  const [concursos, setConcursos] = useState<Concurso[]>(concursosIniciais)
+export default async function EstudosPage() {
+  const concursos = await listarConcursos()
 
   return (
     <div className="flex min-h-svh flex-col">
@@ -26,9 +21,7 @@ export default function EstudosPage() {
       <div className="flex flex-1 flex-col gap-6 p-6 md:p-8">
         <div className="flex items-center justify-between gap-4">
           <h1 className="font-heading text-xl font-medium">Estudos</h1>
-          {concursos.length > 0 && (
-            <ConcursoFormDialog onAdd={(c) => setConcursos((prev) => [c, ...prev])} />
-          )}
+          {concursos.length > 0 && <ConcursoFormDialog />}
         </div>
         {concursos.length === 0 ? (
           <DsEmpty className="py-16">
@@ -42,7 +35,7 @@ export default function EstudosPage() {
               </DsEmptyDescription>
             </DsEmptyHeader>
             <DsEmptyContent>
-              <ConcursoFormDialog onAdd={(c) => setConcursos((prev) => [c, ...prev])} />
+              <ConcursoFormDialog />
             </DsEmptyContent>
           </DsEmpty>
         ) : (

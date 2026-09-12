@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useActionState, useEffect, useState } from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { PlusSignIcon } from "@hugeicons/core-free-icons"
 
+import { DsAlert, DsAlertDescription } from "@/components/ds/alert"
 import { DsButton } from "@/components/ds/button"
 import {
   DsSheet,
@@ -15,48 +16,35 @@ import {
   DsSheetTitle,
   DsSheetTrigger,
 } from "@/components/ds/sheet"
-import { DsField, DsFieldGroup, DsFieldLabel } from "@/components/ds/field"
+import { DsField, DsFieldDescription, DsFieldGroup, DsFieldLabel } from "@/components/ds/field"
 import { DsInput } from "@/components/ds/input"
 import { DsTextarea } from "@/components/ds/textarea"
-import type { RegistroLeitura } from "@/features/leitura/data"
-import { HOJE } from "@/lib/dates"
+import { registrarProgresso, type EstadoDaAcao } from "@/features/leitura/actions"
+
+const ESTADO_INICIAL: EstadoDaAcao = {}
 
 export function AddProgressDialog({
   livroId,
   totalPaginas,
   paginaAtual,
-  onAdd,
 }: {
   livroId: string
   totalPaginas: number
   paginaAtual: number
-  onAdd: (registro: RegistroLeitura) => void
 }) {
   const [open, setOpen] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [data, setData] = useState(HOJE)
-  const [pagina, setPagina] = useState(String(paginaAtual))
-  const [observacao, setObservacao] = useState("")
+  const [estado, acao, salvando] = useActionState(
+    registrarProgresso.bind(null, livroId),
+    ESTADO_INICIAL,
+  )
 
-  function handleSubmit(event: React.FormEvent) {
-    event.preventDefault()
-    const paginaNum = Number(pagina)
-    if (!data || !paginaNum || paginaNum < 0) return
+  useEffect(() => {
+    if (estado.ok) setOpen(false)
+  }, [estado])
 
-    setSaving(true)
-    setTimeout(() => {
-      onAdd({
-        id: crypto.randomUUID(),
-        livroId,
-        data,
-        paginaAtual: Math.min(paginaNum, totalPaginas),
-        observacao: observacao.trim() || undefined,
-      })
-      setObservacao("")
-      setSaving(false)
-      setOpen(false)
-    }, 400)
-  }
+  // Data de hoje do próprio navegador: aqui ela é só o valor inicial do campo,
+  // quem calcula período de verdade é o backend.
+  const hoje = new Date().toISOString().slice(0, 10)
 
   return (
     <DsSheet open={open} onOpenChange={setOpen}>
@@ -65,44 +53,64 @@ export function AddProgressDialog({
         Registrar progresso
       </DsSheetTrigger>
       <DsSheetContent side="bottom" className="mx-auto max-w-lg">
-        <form onSubmit={handleSubmit} className="flex h-full flex-col">
+        <form key={String(open)} action={acao} className="flex h-full flex-col">
           <DsSheetHeader>
             <DsSheetTitle>Registrar progresso</DsSheetTitle>
             <DsSheetDescription>Até qual página você chegou?</DsSheetDescription>
           </DsSheetHeader>
           <DsSheetPanel className="flex-1">
             <DsFieldGroup>
+              {estado.mensagem && (
+                <DsAlert variant="destructive">
+                  <DsAlertDescription>{estado.mensagem}</DsAlertDescription>
+                </DsAlert>
+              )}
               <DsField orientation="responsive">
                 <DsField>
-                  <DsFieldLabel htmlFor="data-registro">Data</DsFieldLabel>
-                  <DsInput id="data-registro" type="date" value={data} onChange={(e) => setData(e.target.value)} required />
+                  <DsFieldLabel htmlFor="data">Data</DsFieldLabel>
+                  <DsInput
+                    id="data"
+                    name="data"
+                    type="date"
+                    defaultValue={hoje}
+                    aria-invalid={Boolean(estado.erros?.data)}
+                    required
+                  />
+                  {estado.erros?.data && (
+                    <DsFieldDescription className="text-destructive">{estado.erros.data}</DsFieldDescription>
+                  )}
                 </DsField>
                 <DsField>
-                  <DsFieldLabel htmlFor="pagina-atual">Página atual</DsFieldLabel>
+                  <DsFieldLabel htmlFor="paginaAtual">Página atual</DsFieldLabel>
                   <DsInput
-                    id="pagina-atual"
+                    id="paginaAtual"
+                    name="paginaAtual"
                     type="number"
                     min={0}
                     max={totalPaginas}
-                    value={pagina}
-                    onChange={(e) => setPagina(e.target.value)}
+                    defaultValue={paginaAtual}
+                    aria-invalid={Boolean(estado.erros?.paginaAtual)}
                     required
                   />
+                  {estado.erros?.paginaAtual && (
+                    <DsFieldDescription className="text-destructive">
+                      {estado.erros.paginaAtual}
+                    </DsFieldDescription>
+                  )}
                 </DsField>
               </DsField>
               <DsField>
                 <DsFieldLabel htmlFor="observacao">Observação (opcional)</DsFieldLabel>
                 <DsTextarea
                   id="observacao"
-                  value={observacao}
-                  onChange={(e) => setObservacao(e.target.value)}
+                  name="observacao"
                   placeholder="Alguma impressão sobre a leitura de hoje..."
                 />
               </DsField>
             </DsFieldGroup>
           </DsSheetPanel>
           <DsSheetFooter>
-            <DsButton type="submit" loading={saving}>
+            <DsButton type="submit" loading={salvando}>
               Salvar
             </DsButton>
           </DsSheetFooter>

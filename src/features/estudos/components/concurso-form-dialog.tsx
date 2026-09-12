@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useActionState, useEffect, useState } from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { PlusSignIcon } from "@hugeicons/core-free-icons"
 
+import { DsAlert, DsAlertDescription } from "@/components/ds/alert"
 import { DsButton } from "@/components/ds/button"
 import {
   DsSheet,
@@ -15,37 +16,30 @@ import {
   DsSheetTitle,
   DsSheetTrigger,
 } from "@/components/ds/sheet"
-import { DsField, DsFieldGroup, DsFieldLabel } from "@/components/ds/field"
+import { DsField, DsFieldDescription, DsFieldGroup, DsFieldLabel } from "@/components/ds/field"
 import { DsInput } from "@/components/ds/input"
-import type { Concurso } from "@/features/estudos/data"
-import { HOJE } from "@/lib/dates"
+import {
+  DsSelect,
+  DsSelectContent,
+  DsSelectItem,
+  DsSelectTrigger,
+  DsSelectValue,
+} from "@/components/ds/select"
+import { criarConcurso, type EstadoDaAcao } from "@/features/estudos/actions"
+import { STATUS_CONCURSO_LABEL, type StatusConcurso } from "@/features/estudos/types"
 
-export function ConcursoFormDialog({ onAdd }: { onAdd: (concurso: Concurso) => void }) {
+const ESTADO_INICIAL: EstadoDaAcao = {}
+
+export function ConcursoFormDialog() {
   const [open, setOpen] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [titulo, setTitulo] = useState("")
-  const [banca, setBanca] = useState("")
-  const [dataProva, setDataProva] = useState(HOJE)
+  const [status, setStatus] = useState<StatusConcurso>("planejando")
+  const [estado, acao, salvando] = useActionState(criarConcurso, ESTADO_INICIAL)
 
-  function handleSubmit(event: React.FormEvent) {
-    event.preventDefault()
-    if (!titulo.trim() || !banca.trim() || !dataProva) return
+  useEffect(() => {
+    if (estado.ok) setOpen(false)
+  }, [estado])
 
-    setSaving(true)
-    setTimeout(() => {
-      onAdd({
-        id: crypto.randomUUID(),
-        titulo: titulo.trim(),
-        banca: banca.trim(),
-        dataProva,
-        status: "planejando",
-      })
-      setTitulo("")
-      setBanca("")
-      setSaving(false)
-      setOpen(false)
-    }, 400)
-  }
+  const hoje = new Date().toISOString().slice(0, 10)
 
   return (
     <DsSheet open={open} onOpenChange={setOpen}>
@@ -54,37 +48,70 @@ export function ConcursoFormDialog({ onAdd }: { onAdd: (concurso: Concurso) => v
         Novo concurso
       </DsSheetTrigger>
       <DsSheetContent side="right">
-        <form onSubmit={handleSubmit} className="flex h-full flex-col">
+        <form key={String(open)} action={acao} className="flex h-full flex-col">
           <DsSheetHeader>
             <DsSheetTitle>Cadastrar concurso</DsSheetTitle>
             <DsSheetDescription>Cadastre o concurso ou cargo que você está estudando.</DsSheetDescription>
           </DsSheetHeader>
           <DsSheetPanel className="flex-1">
             <DsFieldGroup>
+              {estado.mensagem && (
+                <DsAlert variant="destructive">
+                  <DsAlertDescription>{estado.mensagem}</DsAlertDescription>
+                </DsAlert>
+              )}
               <DsField>
-                <DsFieldLabel htmlFor="titulo-concurso">Nome do concurso / cargo</DsFieldLabel>
-                <DsInput id="titulo-concurso" value={titulo} onChange={(e) => setTitulo(e.target.value)} required />
+                <DsFieldLabel htmlFor="titulo">Nome do concurso / cargo</DsFieldLabel>
+                <DsInput id="titulo" name="titulo" aria-invalid={Boolean(estado.erros?.titulo)} required />
+                {estado.erros?.titulo && (
+                  <DsFieldDescription className="text-destructive">{estado.erros.titulo}</DsFieldDescription>
+                )}
               </DsField>
               <DsField orientation="responsive">
                 <DsField>
                   <DsFieldLabel htmlFor="banca">Banca</DsFieldLabel>
-                  <DsInput id="banca" value={banca} onChange={(e) => setBanca(e.target.value)} required />
+                  <DsInput id="banca" name="banca" aria-invalid={Boolean(estado.erros?.banca)} required />
+                  {estado.erros?.banca && (
+                    <DsFieldDescription className="text-destructive">{estado.erros.banca}</DsFieldDescription>
+                  )}
                 </DsField>
                 <DsField>
-                  <DsFieldLabel htmlFor="data-prova">Data da prova</DsFieldLabel>
+                  <DsFieldLabel htmlFor="dataProva">Data da prova</DsFieldLabel>
                   <DsInput
-                    id="data-prova"
+                    id="dataProva"
+                    name="dataProva"
                     type="date"
-                    value={dataProva}
-                    onChange={(e) => setDataProva(e.target.value)}
+                    defaultValue={hoje}
+                    aria-invalid={Boolean(estado.erros?.dataProva)}
                     required
                   />
+                  {estado.erros?.dataProva && (
+                    <DsFieldDescription className="text-destructive">
+                      {estado.erros.dataProva}
+                    </DsFieldDescription>
+                  )}
                 </DsField>
+              </DsField>
+              <DsField>
+                <DsFieldLabel htmlFor="status">Status</DsFieldLabel>
+                <input type="hidden" name="status" value={status} />
+                <DsSelect value={status} onValueChange={(v) => setStatus(v as StatusConcurso)}>
+                  <DsSelectTrigger id="status" className="w-full">
+                    <DsSelectValue>{(valor) => STATUS_CONCURSO_LABEL[valor as StatusConcurso]}</DsSelectValue>
+                  </DsSelectTrigger>
+                  <DsSelectContent>
+                    {Object.entries(STATUS_CONCURSO_LABEL).map(([value, label]) => (
+                      <DsSelectItem key={value} value={value}>
+                        {label}
+                      </DsSelectItem>
+                    ))}
+                  </DsSelectContent>
+                </DsSelect>
               </DsField>
             </DsFieldGroup>
           </DsSheetPanel>
           <DsSheetFooter>
-            <DsButton type="submit" loading={saving}>
+            <DsButton type="submit" loading={salvando}>
               Salvar
             </DsButton>
           </DsSheetFooter>

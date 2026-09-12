@@ -1,6 +1,5 @@
 "use client"
 
-import { useMemo, useState } from "react"
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Fire03Icon } from "@hugeicons/core-free-icons"
@@ -12,68 +11,20 @@ import { DsItem, DsItemContent, DsItemGroup, DsItemTitle } from "@/components/ds
 import { DsProgress, DsProgressIndicator, DsProgressTrack } from "@/components/ds/progress"
 import { AddRegistroHabitoDialog } from "@/features/habitos/components/add-registro-habito-dialog"
 import { StreakHeatmap } from "@/features/habitos/components/streak-heatmap"
-import type { Habito, RegistroHabito } from "@/features/habitos/data"
-import { FREQUENCIA_LABEL } from "@/features/habitos/data"
-import { diasEntre, formatarData, formatarDataCompleta, HOJE } from "@/lib/dates"
-
-function calcularProgresso(habito: Habito, registros: RegistroHabito[]) {
-  const hoje = new Date(`${HOJE}T12:00:00`)
-  let inicio = HOJE
-  if (habito.frequencia === "semanal") {
-    const diff = hoje.getDay() === 0 ? 6 : hoje.getDay() - 1
-    const d = new Date(hoje)
-    d.setDate(hoje.getDate() - diff)
-    inicio = d.toISOString().slice(0, 10)
-  } else if (habito.frequencia === "mensal") {
-    inicio = `${HOJE.slice(0, 7)}-01`
-  }
-  const atual = registros
-    .filter((r) => diasEntre(inicio, r.data) >= 0 && diasEntre(r.data, HOJE) >= 0)
-    .reduce((acc, r) => acc + r.valor, 0)
-  return {
-    atual: Math.round(atual * 10) / 10,
-    percentual: Math.min(100, Math.round((atual / habito.metaValor) * 100)),
-  }
-}
-
-function calcularStreak(habito: Habito, registros: RegistroHabito[]) {
-  if (habito.frequencia !== "diaria") {
-    const totalPorSemana = new Map<string, number>()
-    for (const r of registros) {
-      const chave = r.data.slice(0, 7)
-      totalPorSemana.set(chave, (totalPorSemana.get(chave) ?? 0) + r.valor)
-    }
-    return [...totalPorSemana.values()].filter((v) => v >= habito.metaValor).length
-  }
-  const porData = new Map(registros.map((r) => [r.data, r.valor]))
-  let streak = 0
-  const cursor = new Date(`${HOJE}T12:00:00`)
-  for (let i = 0; i < 365; i++) {
-    const iso = cursor.toISOString().slice(0, 10)
-    const valor = porData.get(iso) ?? 0
-    if (valor >= habito.metaValor) {
-      streak++
-      cursor.setDate(cursor.getDate() - 1)
-    } else break
-  }
-  return streak
-}
+import { FREQUENCIA_LABEL, type Habito, type RegistroHabito } from "@/features/habitos/types"
+import { compararDatas, formatarData, formatarDataCompleta } from "@/lib/dates"
 
 export function HabitoDetail({
   habito,
-  registrosIniciais,
+  registros,
 }: {
   habito: Habito
-  registrosIniciais: RegistroHabito[]
+  registros: RegistroHabito[]
 }) {
-  const [registros, setRegistros] = useState<RegistroHabito[]>(registrosIniciais)
+  const registrosOrdenados = [...registros].sort((a, b) => compararDatas(a.data, b.data))
 
-  const registrosOrdenados = useMemo(
-    () => [...registros].sort((a, b) => a.data.localeCompare(b.data)),
-    [registros]
-  )
-  const progresso = calcularProgresso(habito, registros)
-  const streak = calcularStreak(habito, registros)
+  // progresso e streak vêm calculados da API — a mesma regra que o dashboard usa.
+  const { progresso, streak } = habito
 
   const chartData = registrosOrdenados.map((r) => ({
     data: formatarData(r.data),
@@ -92,11 +43,7 @@ export function HabitoDetail({
               Meta: {habito.metaValor} {habito.unidade} {FREQUENCIA_LABEL[habito.frequencia]}
             </p>
           </div>
-          <AddRegistroHabitoDialog
-            habitoId={habito.id}
-            unidade={habito.unidade}
-            onAdd={(registro) => setRegistros((prev) => [...prev, registro])}
-          />
+          <AddRegistroHabitoDialog habitoId={habito.id} unidade={habito.unidade} />
         </div>
         <section className="grid gap-4 sm:grid-cols-2">
           <DsCard>
@@ -122,7 +69,7 @@ export function HabitoDetail({
                 Streak atual
               </p>
               <p className="font-heading text-2xl font-medium tabular-nums">
-                {streak} {habito.frequencia === "diaria" ? "dias" : "períodos"}
+                {streak.atual} {habito.frequencia === "diaria" ? "dias" : "períodos"}
               </p>
             </DsCardContent>
           </DsCard>

@@ -9,8 +9,8 @@ import { DsButton } from "@/components/ds/button"
 import { DsButtonGroup } from "@/components/ds/button-group"
 import { DsTooltip, DsTooltipContent, DsTooltipProvider, DsTooltipTrigger } from "@/components/ds/tooltip"
 import { PesoIndicator } from "@/features/estudos/components/peso-indicator"
-import type { TopicoEstudo } from "@/features/estudos/data"
-import { corDaMateria, STATUS_TOPICO_LABEL } from "@/features/estudos/data"
+import type { TopicoEstudo } from "@/features/estudos/types"
+import { corDaMateria, STATUS_TOPICO_LABEL } from "@/features/estudos/types"
 import { diasEntre, formatarData, HOJE, parseDate } from "@/lib/dates"
 
 const DIAS_SEMANA = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"]

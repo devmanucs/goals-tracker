@@ -1,7 +1,3 @@
-"use client"
-
-import { useState } from "react"
-
 import { AppHeader } from "@/components/app-header"
 import {
   DsEmpty,
@@ -12,13 +8,13 @@ import {
   DsEmptyTitle,
 } from "@/components/ds/empty"
 import { Illustration } from "@/components/illustration"
+import { listarHabitos } from "@/features/habitos/api"
 import { HabitoCard } from "@/features/habitos/components/habito-card"
 import { HabitoFormDialog } from "@/features/habitos/components/habito-form-dialog"
-import type { Habito } from "@/features/habitos/data"
-import { habitos as habitosIniciais } from "@/features/habitos/data"
 
-export default function HabitosPage() {
-  const [habitos, setHabitos] = useState<Habito[]>(habitosIniciais)
+export default async function HabitosPage() {
+  // A API já devolve progresso, streak e registros recentes de cada hábito.
+  const habitos = await listarHabitos()
 
   return (
     <div className="flex min-h-svh flex-col">
@@ -26,9 +22,7 @@ export default function HabitosPage() {
       <div className="flex flex-1 flex-col gap-6 p-6 md:p-8">
         <div className="flex items-center justify-between gap-4">
           <h1 className="font-heading text-xl font-medium">Hábitos</h1>
-          {habitos.length > 0 && (
-            <HabitoFormDialog onAdd={(h) => setHabitos((prev) => [h, ...prev])} />
-          )}
+          {habitos.length > 0 && <HabitoFormDialog />}
         </div>
         {habitos.length === 0 ? (
           <DsEmpty className="py-16">
@@ -37,10 +31,12 @@ export default function HabitosPage() {
                 <Illustration name="habits" />
               </DsEmptyMedia>
               <DsEmptyTitle>Nenhum hábito cadastrado</DsEmptyTitle>
-              <DsEmptyDescription>Crie um hábito com meta numérica para começar a acompanhar seu streak.</DsEmptyDescription>
+              <DsEmptyDescription>
+                Crie um hábito com meta numérica para começar a acompanhar seu streak.
+              </DsEmptyDescription>
             </DsEmptyHeader>
             <DsEmptyContent>
-              <HabitoFormDialog onAdd={(h) => setHabitos((prev) => [h, ...prev])} />
+              <HabitoFormDialog />
             </DsEmptyContent>
           </DsEmpty>
         ) : (

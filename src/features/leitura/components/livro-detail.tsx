@@ -1,34 +1,30 @@
 "use client"
 
-import { useMemo, useState } from "react"
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
 
 import { AppHeader } from "@/components/app-header"
-import { DsBadge } from "@/components/ds/badge"
 import { DsCard, DsCardContent, DsCardHeader, DsCardTitle } from "@/components/ds/card"
 import { DsChartContainer, DsChartTooltip, DsChartTooltipContent } from "@/components/ds/chart"
 import { DsItem, DsItemContent, DsItemDescription, DsItemGroup, DsItemMedia, DsItemTitle } from "@/components/ds/item"
 import { DsProgress, DsProgressIndicator, DsProgressTrack } from "@/components/ds/progress"
 import { AddProgressDialog } from "@/features/leitura/components/add-progress-dialog"
-import type { Livro, RegistroLeitura } from "@/features/leitura/data"
-import { STATUS_LIVRO_LABEL } from "@/features/leitura/data"
-import { formatarData, formatarDataCompleta } from "@/lib/dates"
+import { StatusLivroSelect } from "@/features/leitura/components/status-livro-select"
+import { corDaCapa, type Livro, type RegistroLeitura } from "@/features/leitura/types"
+import { compararDatas, formatarData, formatarDataCompleta } from "@/lib/dates"
 
 export function LivroDetail({
   livro,
-  registrosIniciais,
+  registros,
 }: {
   livro: Livro
-  registrosIniciais: RegistroLeitura[]
+  registros: RegistroLeitura[]
 }) {
-  const [registros, setRegistros] = useState<RegistroLeitura[]>(registrosIniciais)
+  // A API já devolve os registros em ordem cronológica; a ordenação aqui é só
+  // uma garantia barata para o gráfico não depender disso.
+  const registrosOrdenados = [...registros].sort((a, b) => compararDatas(a.data, b.data))
 
-  const registrosOrdenados = useMemo(
-    () => [...registros].sort((a, b) => a.data.localeCompare(b.data)),
-    [registros]
-  )
-  const paginaAtual = registrosOrdenados.at(-1)?.paginaAtual ?? 0
-  const percentual = Math.round((paginaAtual / livro.totalPaginas) * 100)
+  // paginaAtual e percentual vêm calculados da API, junto do livro.
+  const { paginaAtual, percentual } = livro
 
   const chartData = registrosOrdenados.map((r) => ({
     data: formatarData(r.data),
@@ -45,23 +41,22 @@ export function LivroDetail({
             <div
               className="h-24 w-16 shrink-0 rounded-sm"
               style={{
-                backgroundColor: livro.corCapa,
+                backgroundColor: corDaCapa(livro),
                 boxShadow: "inset -5px 0 10px -5px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.15)",
               }}
             />
             <div>
               <h1 className="font-heading text-xl font-medium text-balance">{livro.titulo}</h1>
               <p className="mt-0.5 text-sm text-muted-foreground">{livro.autor}</p>
-              <DsBadge variant="outline" className="mt-2 text-muted-foreground">
-                {STATUS_LIVRO_LABEL[livro.status]}
-              </DsBadge>
+              <div className="mt-2">
+                <StatusLivroSelect livroId={livro.id} status={livro.status} />
+              </div>
             </div>
           </div>
           <AddProgressDialog
             livroId={livro.id}
             totalPaginas={livro.totalPaginas}
             paginaAtual={paginaAtual}
-            onAdd={(registro) => setRegistros((prev) => [...prev, registro])}
           />
         </div>
         <DsCard>

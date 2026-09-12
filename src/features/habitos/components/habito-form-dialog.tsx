@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useActionState, useEffect, useState } from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { PlusSignIcon } from "@hugeicons/core-free-icons"
 
+import { DsAlert, DsAlertDescription } from "@/components/ds/alert"
 import { DsButton } from "@/components/ds/button"
 import {
   DsSheet,
@@ -15,7 +16,7 @@ import {
   DsSheetTitle,
   DsSheetTrigger,
 } from "@/components/ds/sheet"
-import { DsField, DsFieldGroup, DsFieldLabel } from "@/components/ds/field"
+import { DsField, DsFieldDescription, DsFieldGroup, DsFieldLabel } from "@/components/ds/field"
 import { DsInput } from "@/components/ds/input"
 import {
   DsSelect,
@@ -24,38 +25,19 @@ import {
   DsSelectTrigger,
   DsSelectValue,
 } from "@/components/ds/select"
-import type { FrequenciaHabito, Habito } from "@/features/habitos/data"
-import { FREQUENCIA_LABEL } from "@/features/habitos/data"
+import { criarHabito, type EstadoDaAcao } from "@/features/habitos/actions"
+import { FREQUENCIA_LABEL, type FrequenciaHabito } from "@/features/habitos/types"
 
-export function HabitoFormDialog({ onAdd }: { onAdd: (habito: Habito) => void }) {
+const ESTADO_INICIAL: EstadoDaAcao = {}
+
+export function HabitoFormDialog() {
   const [open, setOpen] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [nome, setNome] = useState("")
-  const [unidade, setUnidade] = useState("")
-  const [metaValor, setMetaValor] = useState("")
   const [frequencia, setFrequencia] = useState<FrequenciaHabito>("diaria")
+  const [estado, acao, salvando] = useActionState(criarHabito, ESTADO_INICIAL)
 
-  function handleSubmit(event: React.FormEvent) {
-    event.preventDefault()
-    if (!nome.trim() || !unidade.trim() || !metaValor) return
-
-    setSaving(true)
-    setTimeout(() => {
-      onAdd({
-        id: crypto.randomUUID(),
-        nome: nome.trim(),
-        unidade: unidade.trim(),
-        metaValor: Number(metaValor),
-        frequencia,
-        icone: "water",
-      })
-      setNome("")
-      setUnidade("")
-      setMetaValor("")
-      setSaving(false)
-      setOpen(false)
-    }, 400)
-  }
+  useEffect(() => {
+    if (estado.ok) setOpen(false)
+  }, [estado])
 
   return (
     <DsSheet open={open} onOpenChange={setOpen}>
@@ -64,52 +46,69 @@ export function HabitoFormDialog({ onAdd }: { onAdd: (habito: Habito) => void })
         Novo hábito
       </DsSheetTrigger>
       <DsSheetContent side="right">
-        <form onSubmit={handleSubmit} className="flex h-full flex-col">
+        <form key={String(open)} action={acao} className="flex h-full flex-col">
           <DsSheetHeader>
             <DsSheetTitle>Cadastrar hábito</DsSheetTitle>
             <DsSheetDescription>Defina um hábito com contador numérico e meta por período.</DsSheetDescription>
           </DsSheetHeader>
           <DsSheetPanel className="flex-1">
             <DsFieldGroup>
+              {estado.mensagem && (
+                <DsAlert variant="destructive">
+                  <DsAlertDescription>{estado.mensagem}</DsAlertDescription>
+                </DsAlert>
+              )}
               <DsField>
-                <DsFieldLabel htmlFor="nome-habito">Nome</DsFieldLabel>
+                <DsFieldLabel htmlFor="nome">Nome</DsFieldLabel>
                 <DsInput
-                  id="nome-habito"
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
+                  id="nome"
+                  name="nome"
                   placeholder="Ex: Beber água"
+                  aria-invalid={Boolean(estado.erros?.nome)}
                   required
                 />
+                {estado.erros?.nome && (
+                  <DsFieldDescription className="text-destructive">{estado.erros.nome}</DsFieldDescription>
+                )}
               </DsField>
               <DsField orientation="responsive">
                 <DsField>
                   <DsFieldLabel htmlFor="unidade">Unidade</DsFieldLabel>
                   <DsInput
                     id="unidade"
-                    value={unidade}
-                    onChange={(e) => setUnidade(e.target.value)}
+                    name="unidade"
                     placeholder="L, km, vezes..."
+                    aria-invalid={Boolean(estado.erros?.unidade)}
                     required
                   />
+                  {estado.erros?.unidade && (
+                    <DsFieldDescription className="text-destructive">{estado.erros.unidade}</DsFieldDescription>
+                  )}
                 </DsField>
                 <DsField>
-                  <DsFieldLabel htmlFor="meta-valor">Meta por período</DsFieldLabel>
+                  <DsFieldLabel htmlFor="metaValor">Meta por período</DsFieldLabel>
                   <DsInput
-                    id="meta-valor"
+                    id="metaValor"
+                    name="metaValor"
                     type="number"
                     min={0.1}
                     step="any"
-                    value={metaValor}
-                    onChange={(e) => setMetaValor(e.target.value)}
+                    aria-invalid={Boolean(estado.erros?.metaValor)}
                     required
                   />
+                  {estado.erros?.metaValor && (
+                    <DsFieldDescription className="text-destructive">
+                      {estado.erros.metaValor}
+                    </DsFieldDescription>
+                  )}
                 </DsField>
               </DsField>
               <DsField>
                 <DsFieldLabel htmlFor="frequencia">Frequência</DsFieldLabel>
+                <input type="hidden" name="frequencia" value={frequencia} />
                 <DsSelect value={frequencia} onValueChange={(v) => setFrequencia(v as FrequenciaHabito)}>
                   <DsSelectTrigger id="frequencia" className="w-full">
-                    <DsSelectValue />
+                    <DsSelectValue>{(valor) => `Meta ${FREQUENCIA_LABEL[valor as FrequenciaHabito]}`}</DsSelectValue>
                   </DsSelectTrigger>
                   <DsSelectContent>
                     {Object.entries(FREQUENCIA_LABEL).map(([value, label]) => (
@@ -123,7 +122,7 @@ export function HabitoFormDialog({ onAdd }: { onAdd: (habito: Habito) => void })
             </DsFieldGroup>
           </DsSheetPanel>
           <DsSheetFooter>
-            <DsButton type="submit" loading={saving}>
+            <DsButton type="submit" loading={salvando}>
               Salvar
             </DsButton>
           </DsSheetFooter>

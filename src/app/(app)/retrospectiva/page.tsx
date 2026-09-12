@@ -2,16 +2,13 @@ import { AppHeader } from "@/components/app-header"
 import { DsCard, DsCardContent } from "@/components/ds/card"
 import { Illustration } from "@/components/illustration"
 import { StatStrip } from "@/components/stat-card"
+import { retrospectiva } from "@/features/retrospectiva/api"
 import { RetrospectivaCharts } from "@/features/retrospectiva/components/retrospectiva-charts"
-import {
-  habitosConcluidosPorMes,
-  paginasLidasPorMes,
-  resumoRetrospectiva,
-  topicosEstudadosPorMes,
-} from "@/features/retrospectiva/data"
 
-export default function RetrospectivaPage() {
-  const resumo = resumoRetrospectiva()
+export default async function RetrospectivaPage() {
+  // As duas janelas que os gráficos alternam — o backend agrega cada uma.
+  const [seisMeses, dozeMeses] = await Promise.all([retrospectiva(6), retrospectiva(12)])
+  const { resumo } = dozeMeses
 
   return (
     <div className="flex min-h-svh flex-col">
@@ -21,10 +18,12 @@ export default function RetrospectivaPage() {
         <DsCard className="overflow-hidden">
           <DsCardContent className="flex flex-wrap items-center justify-between gap-6">
             <div className="max-w-md">
-              <h2 className="font-heading text-lg font-medium">100% dos seus dados, em um só lugar</h2>
+              <h2 className="font-heading text-lg font-medium">
+                100% dos seus dados, em um só lugar
+              </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Um resumo do que você leu, estudou e manteve como hábito — pronto para o seu levantamento de fim de
-                ano.
+                Um resumo do que você leu, estudou e manteve como hábito — pronto para o seu
+                levantamento de fim de ano.
               </p>
             </div>
             <Illustration name="winners" size={140} className="shrink-0" />
@@ -41,12 +40,12 @@ export default function RetrospectivaPage() {
         />
 
         <RetrospectivaCharts
-          paginas6={paginasLidasPorMes(6)}
-          paginas12={paginasLidasPorMes(12)}
-          topicos6={topicosEstudadosPorMes(6)}
-          topicos12={topicosEstudadosPorMes(12)}
-          habitos6={habitosConcluidosPorMes(6)}
-          habitos12={habitosConcluidosPorMes(12)}
+          paginas6={seisMeses.paginasLidasPorMes}
+          paginas12={dozeMeses.paginasLidasPorMes}
+          topicos6={seisMeses.topicosEstudadosPorMes}
+          topicos12={dozeMeses.topicosEstudadosPorMes}
+          habitos6={seisMeses.habitosConcluidosPorMes}
+          habitos12={dozeMeses.habitosConcluidosPorMes}
         />
       </div>
     </div>
