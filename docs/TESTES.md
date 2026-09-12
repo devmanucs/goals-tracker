@@ -9,23 +9,60 @@ pnpm test:coverage   # com cobertura
 ```
 
 Configuração em `jest.config.ts`, usando `next/jest` — ele cuida do SWC, dos aliases
-`@/`, do CSS e das imagens. `jest.setup.ts` carrega os matchers do
-`@testing-library/jest-dom`. Ambiente `jsdom`.
+`@/`, do CSS e das imagens. Ambiente `jsdom`. O `jest.setup.ts` carrega os matchers
+do `@testing-library/jest-dom` e stuba três APIs de layout que o jsdom não tem
+(`ResizeObserver`, `matchMedia` e `scrollIntoView`) — sem elas, qualquer teste que
+abra diálogo ou command menu quebra com `ReferenceError`.
 
 ### O que é testado
 
 ```
-tests/lib/dates.test.ts   # parse, diasEntre, compararDatas, formatação
+tests/lib/dates.test.ts                          # parse, diasEntre, compararDatas, formatação
+tests/lib/utils.test.ts                          # cn (merge de classes do Tailwind)
+tests/lib/api.test.ts                            # cliente HTTP: header, 204, ApiError, issues
+tests/features/leitura-types.test.ts             # corDaCapa e rótulos de status
+tests/features/estudos-types.test.ts             # corDaMateria e rótulos
+tests/features/habitos-types.test.ts             # progressoDoDia e frequências
+tests/features/catalogo.test.ts                  # buscar/detalhar: URL, encoding, erro
+tests/hooks/use-debounce.test.ts                 # atraso, cancelamento, troca de valor
+tests/components/breadcrumb-context.test.tsx     # registro por contexto, sem re-registro à toa
+tests/components/command-menu.test.tsx           # Ctrl+K, índice buscado uma vez, navegação
+tests/components/auth/login-form.test.tsx        # troca de modo, envio, erro por campo
+tests/components/leitura/                        # capa com fallback, card, filtro, busca no catálogo
+tests/components/estudos/                        # peso, card de concurso, tabela de tópicos
+tests/components/habitos/                        # heatmap de streak e card
+tests/utils/render-com-query.tsx                 # helper: render com QueryClientProvider próprio
 ```
 
 Os testes dos `features/*/data.ts` foram removidos junto com os mocks: eles
 exercitavam dados que não existem mais. As regras que eles cobriam (streak,
-progresso, páginas por delta) agora são do backend, onde têm 148 testes.
+progresso, páginas por delta) agora são do backend, onde têm 177 testes.
 
 O `dates.test.ts` fixa uma armadilha real: **`diasEntre` NÃO serve de comparador**
 de ordenação, porque devolve `b - a`. Usá-lo em `sort` ordena ao contrário, e foi
 a causa de `paginaAtualDoLivro` reportar a primeira página em vez da atual. Para
 ordenar por data, use `compararDatas`.
+
+### Limite conhecido: o popup do Select trava no jsdom
+
+Abrir o `Select` do Base UI (clique no gatilho) **pendura o teste** — ele depende da
+API de popover e de medidas de layout que o jsdom não implementa, e o `act` nunca
+resolve. Por isso `topicos-table.test.tsx` cobre ordenação, rótulos e estado do
+gatilho, mas não a escolha de uma opção; a troca de status de ponta a ponta fica
+com o `e2e/fluxo-completo.mjs`, que roda no Chromium de verdade. Se um teste novo
+travar sem mensagem, suspeite disso antes de qualquer outra coisa.
+
+### Mocks que todo teste de componente precisa
+
+- Server Action (`features/*/actions.ts`): `jest.mock` no módulo inteiro. Elas
+  importam `server-only` e o cookie da sessão, que não existem no jsdom.
+- `src/lib/api.ts`: além do mock de `@/lib/sessao`, precisa de
+  `jest.mock("server-only", () => ({}))`.
+- `next/navigation`: mock do `useRouter`/`useSearchParams` nos componentes que
+  navegam ou leem a query string.
+- React Query: use `renderComQuery` de `tests/utils/` — um `QueryClient` por teste,
+  com `retry: false`, senão o cache vaza de um teste para o outro e o teste de erro
+  espera as tentativas.
 
 ## Ponta a ponta (`e2e/`)
 
@@ -57,10 +94,10 @@ Ficam **fora do CI** de propósito: dependem dos dois servidores no ar.
 
 ### O que não é testado (ainda)
 
-- Componentes de UI isolados. `@testing-library/react` e `user-event` já estão
-  instalados; os alvos que mais valem são os diálogos de formulário e o
-  `streak-heatmap.tsx`. Precisariam de mock do `src/lib/api.ts`.
+- Diálogos de formulário (`*-form-dialog.tsx`): usam `Select` e `Sheet` do Base UI,
+  que esbarram no limite acima.
 - Páginas e navegação fora do que o e2e cobre.
+- `app-sidebar.tsx` e `nav-user.tsx`: dependem do provider de sidebar e do tema.
 
 ### Ao escrever teste novo
 
