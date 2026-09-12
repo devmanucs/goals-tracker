@@ -9,6 +9,7 @@ import { DsItem, DsItemContent, DsItemDescription, DsItemGroup, DsItemMedia, DsI
 import { DsProgress, DsProgressIndicator, DsProgressTrack } from "@/components/ds/progress"
 import { AddProgressDialog } from "@/features/leitura/components/add-progress-dialog"
 import { StatusLivroSelect } from "@/features/leitura/components/status-livro-select"
+import { CapaDoLivro } from "@/features/leitura/components/capa-do-livro"
 import { corDaCapa, type Livro, type RegistroLeitura } from "@/features/leitura/types"
 import { compararDatas, formatarData, formatarDataCompleta } from "@/lib/dates"
 
@@ -38,16 +39,18 @@ export function LivroDetail({
       <div className="flex flex-1 flex-col gap-6 p-6 md:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-start gap-4">
-            <div
-              className="h-24 w-16 shrink-0 rounded-sm"
-              style={{
-                backgroundColor: corDaCapa(livro),
-                boxShadow: "inset -5px 0 10px -5px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.15)",
-              }}
+            <CapaDoLivro
+              url={livro.capaUrl}
+              titulo={livro.titulo}
+              corDeFundo={corDaCapa(livro)}
+              className="h-24 w-16"
             />
             <div>
               <h1 className="font-heading text-xl font-medium text-balance">{livro.titulo}</h1>
-              <p className="mt-0.5 text-sm text-muted-foreground">{livro.autor}</p>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                {livro.autor}
+                {livro.anoPublicacao ? ` · ${livro.anoPublicacao}` : ""}
+              </p>
               <div className="mt-2">
                 <StatusLivroSelect livroId={livro.id} status={livro.status} />
               </div>
@@ -75,6 +78,19 @@ export function LivroDetail({
             </DsProgress>
           </DsCardContent>
         </DsCard>
+
+        {livro.sinopse && (
+          <DsCard>
+            <DsCardHeader>
+              <DsCardTitle>Sinopse</DsCardTitle>
+            </DsCardHeader>
+            <DsCardContent>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {livro.sinopse}
+              </p>
+            </DsCardContent>
+          </DsCard>
+        )}
 
         {chartData.length > 1 && (
           <DsCard>

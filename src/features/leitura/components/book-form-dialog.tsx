@@ -26,6 +26,10 @@ import {
   DsSelectValue,
 } from "@/components/ds/select"
 import { criarLivro, type EstadoDaAcao } from "@/features/leitura/actions"
+import {
+  BuscaNoCatalogo,
+  type LivroEscolhido,
+} from "@/features/leitura/components/busca-no-catalogo"
 import { STATUS_LIVRO_LABEL, type StatusLivro } from "@/features/leitura/types"
 
 const ESTADO_INICIAL: EstadoDaAcao = {}
@@ -33,11 +37,17 @@ const ESTADO_INICIAL: EstadoDaAcao = {}
 export function BookFormDialog() {
   const [open, setOpen] = useState(false)
   const [status, setStatus] = useState<StatusLivro>("quero_ler")
+  // Quando vem do catálogo, os campos abaixo nascem preenchidos — e seguem
+  // editáveis, porque a mediana de páginas do catálogo erra com frequência.
+  const [doCatalogo, setDoCatalogo] = useState<LivroEscolhido | null>(null)
   // A action revalida a rota; aqui só fechamos a gaveta quando ela dá certo.
   const [estado, acao, salvando] = useActionState(
     async (anterior: EstadoDaAcao, formData: FormData) => {
       const resultado = await criarLivro(anterior, formData)
-      if (resultado.ok) setOpen(false)
+      if (resultado.ok) {
+        setOpen(false)
+        setDoCatalogo(null)
+      }
       return resultado
     },
     ESTADO_INICIAL,
@@ -50,8 +60,16 @@ export function BookFormDialog() {
         Novo livro
       </DsSheetTrigger>
       <DsSheetContent side="right">
-        {/* key remonta o form a cada abertura, limpando o que sobrou da anterior */}
-        <form key={String(open)} action={acao} className="flex h-full flex-col">
+        {/*
+          key remonta o form a cada abertura (limpando o que sobrou da anterior)
+          e a cada escolha no catálogo, para os campos abaixo assumirem os novos
+          defaultValue.
+        */}
+        <form
+          key={`${String(open)}-${doCatalogo?.chave ?? "manual"}`}
+          action={acao}
+          className="flex h-full flex-col"
+        >
           <DsSheetHeader>
             <DsSheetTitle>Cadastrar livro</DsSheetTitle>
             <DsSheetDescription>Adicione um livro para acompanhar seu progresso de leitura.</DsSheetDescription>
@@ -63,16 +81,45 @@ export function BookFormDialog() {
                   <DsAlertDescription>{estado.mensagem}</DsAlertDescription>
                 </DsAlert>
               )}
+
+              <BuscaNoCatalogo
+                escolhido={doCatalogo}
+                aoEscolher={setDoCatalogo}
+                aoLimpar={() => setDoCatalogo(null)}
+              />
+
+              {/* O que veio do catálogo e não tem campo visível viaja escondido */}
+              <input type="hidden" name="capaUrl" value={doCatalogo?.capaUrl ?? ""} />
+              <input type="hidden" name="sinopse" value={doCatalogo?.sinopse ?? ""} />
+              <input type="hidden" name="isbn" value={doCatalogo?.isbn ?? ""} />
+              <input
+                type="hidden"
+                name="anoPublicacao"
+                value={doCatalogo?.anoPublicacao ?? ""}
+              />
+
               <DsField>
                 <DsFieldLabel htmlFor="titulo">Título</DsFieldLabel>
-                <DsInput id="titulo" name="titulo" aria-invalid={Boolean(estado.erros?.titulo)} required />
+                <DsInput
+                  id="titulo"
+                  name="titulo"
+                  defaultValue={doCatalogo?.titulo ?? ""}
+                  aria-invalid={Boolean(estado.erros?.titulo)}
+                  required
+                />
                 {estado.erros?.titulo && (
                   <DsFieldDescription className="text-destructive">{estado.erros.titulo}</DsFieldDescription>
                 )}
               </DsField>
               <DsField>
                 <DsFieldLabel htmlFor="autor">Autor</DsFieldLabel>
-                <DsInput id="autor" name="autor" aria-invalid={Boolean(estado.erros?.autor)} required />
+                <DsInput
+                  id="autor"
+                  name="autor"
+                  defaultValue={doCatalogo?.autor ?? ""}
+                  aria-invalid={Boolean(estado.erros?.autor)}
+                  required
+                />
                 {estado.erros?.autor && (
                   <DsFieldDescription className="text-destructive">{estado.erros.autor}</DsFieldDescription>
                 )}
@@ -85,6 +132,7 @@ export function BookFormDialog() {
                     name="totalPaginas"
                     type="number"
                     min={1}
+                    defaultValue={doCatalogo?.totalPaginas ?? ""}
                     aria-invalid={Boolean(estado.erros?.totalPaginas)}
                     required
                   />

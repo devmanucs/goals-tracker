@@ -43,6 +43,11 @@ pnpm test:e2e
 - `e2e/auth.mjs` — rota protegida redireciona, registro entra, sidebar traz os
   dados de `/auth/me`, cookie é `httpOnly` e invisível para JS, logado sai de
   `/login`, sair apaga a sessão e credencial errada mostra a mensagem do backend.
+- `e2e/busca-catalogo.mjs` — busca no catálogo externo, escolha de um resultado,
+  preenchimento automático do formulário, sinopse no detalhe, e que a edição
+  manual de um campo prevalece sobre o que veio do catálogo. Para rodar contra um
+  catálogo controlado em vez da Open Library, suba a API com `CATALOGO_BASE_URL`
+  apontando para um servidor que imite o `/search.json`.
 - `e2e/fluxo-completo.mjs` — cria conta, cadastra livro, concurso, tópico e
   hábito, confere o percentual, a troca de status, o streak, a agregação do
   dashboard e da retrospectiva, e que **uma segunda conta não enxerga nada da

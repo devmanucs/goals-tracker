@@ -50,7 +50,20 @@ const livroSchema = z.object({
     .int("Use um número inteiro")
     .positive("O total de páginas deve ser maior que zero"),
   status: z.enum(["quero_ler", "lendo", "lido", "abandonado"]),
+
+  // Vêm da busca no catálogo, em campos ocultos do formulário. Ausentes quando
+  // o livro foi digitado na mão.
+  capaUrl: z.string().url().optional(),
+  sinopse: z.string().optional(),
+  isbn: z.string().optional(),
+  anoPublicacao: z.coerce.number().int().optional(),
 })
+
+/** Campo oculto vazio chega como "" — vira ausente em vez de string vazia. */
+function opcional(valor: FormDataEntryValue | null) {
+  const texto = String(valor ?? "").trim()
+  return texto.length > 0 ? texto : undefined
+}
 
 export async function criarLivro(
   _anterior: EstadoDaAcao,
@@ -61,6 +74,10 @@ export async function criarLivro(
     autor: formData.get("autor"),
     totalPaginas: formData.get("totalPaginas"),
     status: formData.get("status"),
+    capaUrl: opcional(formData.get("capaUrl")),
+    sinopse: opcional(formData.get("sinopse")),
+    isbn: opcional(formData.get("isbn")),
+    anoPublicacao: opcional(formData.get("anoPublicacao")),
   })
 
   if (!validacao.success) return deZod(validacao.error)

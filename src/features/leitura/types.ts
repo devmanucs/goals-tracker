@@ -14,6 +14,11 @@ export interface Livro {
   totalPaginas: number
   status: StatusLivro
   corCapa: string | null
+  /** Preenchidos pela busca no catálogo; nulos num cadastro manual. */
+  capaUrl: string | null
+  sinopse: string | null
+  isbn: string | null
+  anoPublicacao: number | null
   createdAt: string
   /** Derivados do registro mais recente, já vêm prontos da API. */
   paginaAtual: number
