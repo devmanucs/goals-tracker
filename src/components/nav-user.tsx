@@ -1,7 +1,8 @@
 "use client"
 
-import { useRouter } from "next/navigation"
+import { useTransition } from "react"
 
+import { sair } from "@/features/auth/actions"
 import { DsAvatar, DsAvatarFallback } from "@/components/ds/avatar"
 import {
   DsDropdownMenu,
@@ -16,10 +17,11 @@ import { DsSidebarMenu, DsSidebarMenuButton, DsSidebarMenuItem, useDsSidebar } f
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Logout01Icon, MoreVerticalCircle01Icon, Settings05Icon } from "@hugeicons/core-free-icons"
 
-export function NavUser({ user }: { user: { name: string; email: string } }) {
+export function NavUser({ usuario }: { usuario: { nome: string; email: string } }) {
   const { isMobile } = useDsSidebar()
-  const router = useRouter()
-  const initials = user.name
+  // useTransition para o item não ficar clicável duas vezes enquanto desloga.
+  const [saindo, iniciarSaida] = useTransition()
+  const initials = usuario.nome
     .split(" ")
     .map((part) => part[0])
     .slice(0, 2)
@@ -35,8 +37,8 @@ export function NavUser({ user }: { user: { name: string; email: string } }) {
               <DsAvatarFallback className="text-xs">{initials}</DsAvatarFallback>
             </DsAvatar>
             <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-medium">{user.name}</span>
-              <span className="truncate text-xs text-muted-foreground">{user.email}</span>
+              <span className="truncate font-medium">{usuario.nome}</span>
+              <span className="truncate text-xs text-muted-foreground">{usuario.email}</span>
             </div>
             <HugeiconsIcon icon={MoreVerticalCircle01Icon} strokeWidth={2} className="ml-auto size-4" />
           </DsDropdownMenuTrigger>
@@ -48,8 +50,8 @@ export function NavUser({ user }: { user: { name: string; email: string } }) {
                     <DsAvatarFallback className="text-xs">{initials}</DsAvatarFallback>
                   </DsAvatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-medium">{user.name}</span>
-                    <span className="truncate text-xs text-muted-foreground">{user.email}</span>
+                    <span className="truncate font-medium">{usuario.nome}</span>
+                    <span className="truncate text-xs text-muted-foreground">{usuario.email}</span>
                   </div>
                 </div>
               </DsDropdownMenuLabel>
@@ -60,9 +62,12 @@ export function NavUser({ user }: { user: { name: string; email: string } }) {
               Configurações
             </DsDropdownMenuItem>
             <DsDropdownMenuSeparator />
-            <DsDropdownMenuItem onClick={() => router.push("/login")}>
+            <DsDropdownMenuItem
+              disabled={saindo}
+              onClick={() => iniciarSaida(() => void sair())}
+            >
               <HugeiconsIcon icon={Logout01Icon} strokeWidth={2} />
-              Sair
+              {saindo ? "Saindo..." : "Sair"}
             </DsDropdownMenuItem>
           </DsDropdownMenuContent>
         </DsDropdownMenu>

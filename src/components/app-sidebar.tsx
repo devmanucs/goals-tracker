@@ -33,9 +33,7 @@ const NAV_ITEMS = [
   { href: "/retrospectiva", label: "Retrospectiva", icon: Analytics01Icon },
 ]
 
-const USER = { name: "Manuella", email: "manuhcsantos@gmail.com" }
-
-export function AppSidebar() {
+export function AppSidebar({ usuario }: { usuario: { nome: string; email: string } }) {
   const pathname = usePathname()
 
   return (
@@ -72,7 +70,7 @@ export function AppSidebar() {
         </DsSidebarGroup>
       </DsSidebarContent>
       <DsSidebarFooter>
-        <NavUser user={USER} />
+        <NavUser usuario={usuario} />
       </DsSidebarFooter>
     </DsSidebar>
   )
