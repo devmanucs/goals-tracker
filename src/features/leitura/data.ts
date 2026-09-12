@@ -1,4 +1,4 @@
-import { diasEntre, HOJE } from "@/lib/dates"
+import { compararDatas, diasEntre, HOJE } from "@/lib/dates"
 
 export const META_ANUAL_LEITURA = 12
 
@@ -107,7 +107,7 @@ export function getLivro(id: string) {
 export function getRegistrosDoLivro(livroId: string) {
   return registrosLeitura
     .filter((r) => r.livroId === livroId)
-    .sort((a, b) => diasEntre(a.data, b.data))
+    .sort((a, b) => compararDatas(a.data, b.data))
 }
 
 export function paginaAtualDoLivro(livroId: string) {
@@ -134,7 +134,7 @@ export function estatisticasLeitura() {
   const totalPaginasRegistradas = registrosLeitura.reduce((acc, r, _i, arr) => {
     const anterior = [...arr]
       .filter((o) => o.livroId === r.livroId && o.data < r.data)
-      .sort((a, b) => diasEntre(a.data, b.data))
+      .sort((a, b) => compararDatas(a.data, b.data))
       .at(-1)
     const delta = r.paginaAtual - (anterior?.paginaAtual ?? 0)
     return acc + Math.max(delta, 0)

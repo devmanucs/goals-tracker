@@ -1,4 +1,4 @@
-import { diasEntre, HOJE } from "@/lib/dates"
+import { compararDatas, diasEntre, HOJE } from "@/lib/dates"
 
 export type StatusTopico = "pendente" | "estudando" | "estudado" | "revisao"
 
@@ -92,7 +92,7 @@ export function getTopicosPorPeso(concursoId: string) {
 export function proximoTopico() {
   return topicos
     .filter((t) => t.status !== "estudado" && diasEntre(HOJE, t.dataAgendada) >= 0)
-    .sort((a, b) => diasEntre(a.dataAgendada, b.dataAgendada))[0]
+    .sort((a, b) => compararDatas(a.dataAgendada, b.dataAgendada))[0]
 }
 
 export function progressoConcurso(concursoId: string) {
