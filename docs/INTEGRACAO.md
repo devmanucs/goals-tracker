@@ -4,8 +4,7 @@ Estado atual: **o frontend já consome a API — não há mais mock.** Este docu
 o contrato real, conferido contra o código do backend e exercitado pelos roteiros
 em `e2e/`.
 
-O único item do [API_ROUTES.md](API_ROUTES.md) que segue sem implementação é a
-**busca externa de livros** (`/livros/buscar-externo`, proxy do Open Library).
+Todos os itens do [API_ROUTES.md](API_ROUTES.md) estão implementados.
 
 Backend: [devmanucs/goals-tracker-back](https://github.com/devmanucs/goals-tracker-back)
 (Express 5 + Prisma 7 + SQLite em dev).
@@ -65,6 +64,8 @@ requisição com aquele token dá 401. Só o dispositivo atual cai.
 | GET/POST | `/livros/:id/registros` | `{ data, paginaAtual, observacao? }` |
 | PATCH/DELETE | `/registros-leitura/:id` | |
 | GET | `/leitura/estatisticas?de=&ate=` | |
+| GET | `/livros/buscar-externo?q=&limite=` | Busca no catálogo (Open Library) |
+| GET | `/livros/buscar-externo/detalhe?chave=` | Sinopse do livro escolhido |
 
 `GET /leitura/estatisticas` devolve:
 
@@ -80,6 +81,44 @@ requisição com aquele token dá 401. Só o dispositivo atual cai.
   periodo: { de: string | null; ate: string | null } | null
 }
 ```
+
+### Busca no catálogo externo
+
+Duas rotas, porque buscar a sinopse de cada item da lista custaria uma requisição
+por resultado. A lista é um seletor; o texto só interessa depois de escolher.
+
+```ts
+// GET /livros/buscar-externo?q=duna&limite=8
+{
+  fonte: string       // qual provedor respondeu
+  cache: boolean      // se veio do cache do backend
+  resultados: {
+    chave: string     // id no provedor, ex "/works/OL27448W"
+    titulo: string
+    autor: string | null
+    totalPaginas: number | null
+    capaUrl: string | null
+    anoPublicacao: number | null
+    isbn: string | null
+  }[]
+}
+
+// GET /livros/buscar-externo/detalhe?chave=/works/OL27448W
+// o acima, mais:
+{ sinopse: string | null; assuntos: string[] }
+```
+
+Ambas **exigem token**. O backend limita a 30 buscas por minuto por usuário e
+guarda o resultado em cache; ainda assim, o frontend só dispara a consulta depois
+de 350 ms sem digitação e a partir de 2 caracteres.
+
+No frontend, a busca é o **único** ponto que usa React Query (`queryKey:
+["catalogo", "buscar", termo]`) — o resto do app é Server Component. Como o token
+está num cookie `httpOnly`, o componente de cliente passa pelos route handlers
+`/api/livros/buscar` e `/api/livros/buscar/detalhe`.
+
+`Livro` ganhou `capaUrl`, `sinopse`, `isbn` e `anoPublicacao`, todos opcionais —
+cadastro manual continua funcionando sem nenhum deles.
 
 ### Estudos
 | Método | Rota | Observação |

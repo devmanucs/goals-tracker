@@ -3,6 +3,7 @@ import Link from "next/link"
 import { DsBadge } from "@/components/ds/badge"
 import { DsFrame, DsFrameFooter, DsFrameHeader, DsFramePanel, DsFrameTitle } from "@/components/ds/frame"
 import { DsProgress, DsProgressIndicator, DsProgressTrack } from "@/components/ds/progress"
+import { CapaDoLivro } from "@/features/leitura/components/capa-do-livro"
 import { corDaCapa, STATUS_LIVRO_LABEL, type Livro } from "@/features/leitura/types"
 
 // paginaAtual e percentual vêm prontos da API junto do livro, então o card não
@@ -17,12 +18,11 @@ export function BookCard({ livro }: { livro: Livro }) {
           <DsFrameTitle className="line-clamp-2 text-balance">{livro.titulo}</DsFrameTitle>
         </DsFrameHeader>
         <DsFramePanel className="flex flex-1 gap-3">
-          <div
-            className="h-20 w-14 shrink-0 rounded-sm"
-            style={{
-              backgroundColor: corDaCapa(livro),
-              boxShadow: "inset -4px 0 8px -4px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.15)",
-            }}
+          <CapaDoLivro
+            url={livro.capaUrl}
+            titulo={livro.titulo}
+            corDeFundo={corDaCapa(livro)}
+            className="h-20 w-14"
           />
           <div className="flex min-w-0 flex-col gap-1.5">
             <p className="truncate text-xs text-muted-foreground">{livro.autor}</p>

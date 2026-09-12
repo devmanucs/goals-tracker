@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono, Merriweather } from "next/font/google"
 
 import "./globals.css"
+import { Providers } from "@/app/providers"
 import { ThemeProvider } from "@/components/theme-provider"
 import { DsTooltipProvider } from "@/components/ds/tooltip"
 import { cn } from "@/lib/utils";
@@ -30,7 +31,9 @@ export default function RootLayout({
     >
       <body>
         <ThemeProvider>
-          <DsTooltipProvider>{children}</DsTooltipProvider>
+          <Providers>
+            <DsTooltipProvider>{children}</DsTooltipProvider>
+          </Providers>
         </ThemeProvider>
       </body>
     </html>
